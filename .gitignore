@@ -1,0 +1,38 @@
+### Python ###
+# Ambientes virtuais (venv)
+.venv/
+venv/
+ENV/
+env/
+ENV_DIR/
+
+# Arquivos compilados do Python e cache
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+### Ambientes e Segurança ###
+.env
+.env.local
+.env.*.local
+
+### Docker & Banco de Dados ###
+postgres_data/
+pgdata/
+
+### IDEs e Editores de Código ###
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm / IntelliJ
+.idea/
+
+### Sistema Operacional ###
+.DS_Store
+Thumbs.db
