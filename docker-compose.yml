@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:16
+    container_name: HYMB_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:  
+      - ${DB_PORT}:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/ddl/01_create_tables.sql:/docker-entrypoint-initdb.d/01_create_tables.sql
+      - ./sql/dml/02_insert_data.sql:/docker-entrypoint-initdb.d/02_insert_data.sql
+
+volumes:
+  postgres_data:
