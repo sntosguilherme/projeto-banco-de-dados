@@ -8,7 +8,7 @@
 -- PESSOA
 INSERT INTO PESSOA (nome, cpf, data_nascimento, is_flamengo, telefone) VALUES
 -- Residentes
-('Guimas',              '021.345.678-90', '1998-03-12', TRUE,  '(83) 91111-0001'),
+('Guimas',              '021.345.678-90', '1998-03-12', FALSE,  '(83) 91111-0001'),
 ('Borges',              '032.456.789-01', '1997-11-25', FALSE, '(83) 92222-0002'),
 ('Zé Freire',           '043.567.890-12', '1999-06-08', TRUE,  '(83) 93333-0003'),
 ('Mikael Menezes',      '054.678.901-23', '1998-09-17', FALSE, '(83) 94444-0004'),
