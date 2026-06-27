@@ -1,7 +1,7 @@
 CREATE TABLE PESSOA (
     id_pessoa SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    cpf VARCHAR(14) UNIQUE NOT NULL, -- formato xxx.xxx.xxx-xx, ver se tem como forçar esse formato
+    cpf VARCHAR(14) UNIQUE NOT NULL (cpf ~ '^\d{3}\.\d{3}\.\d{3}-\d{2}$'),
     data_nascimento DATE NOT NULL,
     is_flamengo BOOLEAN NOT NULL,
     telefone VARCHAR(20)
