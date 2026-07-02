@@ -14,5 +14,27 @@ services:
       - ./sql/ddl/01_create_tables.sql:/docker-entrypoint-initdb.d/01_create_tables.sql
       - ./sql/dml/02_insert_data.sql:/docker-entrypoint-initdb.d/02_insert_data.sql
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: HYMB_backend
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
