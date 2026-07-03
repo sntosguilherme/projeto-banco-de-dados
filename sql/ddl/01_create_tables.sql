@@ -61,7 +61,7 @@ CREATE TABLE PROCEDIMENTO_REALIZADO (
     quantidade INT NOT NULL CHECK (quantidade > 0),
     tempo_real_minutos INT NOT NULL CHECK (tempo_real_minutos > 0),
     observacao TEXT,
-    faturado BOOLEAN DEFAULT FALSE,
+   faturado BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_atendimento, id_procedimento)
 );
 
