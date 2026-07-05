@@ -1,7 +1,7 @@
 -- Inserir um novo atendimento
 -- Mapeamento CRUD: CREATE / Sugestão de Rota API: POST /atendimentos
 INSERT INTO ATENDIMENTO (data_hora, duracao_minutos, id_paciente, id_residente, id_preceptor)
-VALUES ('2023-11-01 10:00:00', 60, 11, 2, 6);
+VALUES (%s, %s, %s, %s, %s);
 
 -- Listar todos os atendimentos de um paciente específico
 -- Mapeamento CRUD: READ / Sugestão de Rota API: GET /pacientes/{id_paciente}/atendimentos
@@ -16,7 +16,7 @@ FROM ATENDIMENTO a
 JOIN PESSOA p ON a.id_paciente = p.id_pessoa
 JOIN PESSOA r ON a.id_residente = r.id_pessoa
 JOIN PESSOA pr ON a.id_preceptor = pr.id_pessoa
-WHERE a.id_paciente = 11
+WHERE a.id_paciente = %s
 ORDER BY a.data_hora DESC;
 
 -- Listar os procedimentos realizados em um atendimento
@@ -27,20 +27,26 @@ SELECT
     pr.tempo_real_minutos
 FROM PROCEDIMENTO_REALIZADO pr
 JOIN PROCEDIMENTO p ON pr.id_procedimento = p.id_procedimento
-WHERE pr.id_atendimento = 1;
+WHERE pr.id_atendimento = %s;
 
--- Atualizar os dados de um paciente
+-- Atualizar os dados de um paciente (convênio)
 -- Mapeamento CRUD: UPDATE / Sugestão de Rota API: PATCH /pacientes/{id_paciente}
 UPDATE PACIENTE
-SET num_convenio = 'AMIL-987654321'
-WHERE id_pessoa = 11;
+SET num_convenio = %s
+WHERE id_pessoa = %s;
+
+-- Atualizar os dados de um paciente (alergias)
+-- Mapeamento CRUD: UPDATE / Sugestão de Rota API: PATCH /pacientes/{id_paciente}
+UPDATE PACIENTE
+SET alergias = %s
+WHERE id_pessoa = %s;
 
 -- Remover um procedimento realizado
 -- Mapeamento CRUD: DELETE / Sugestão de Rota API: DELETE /atendimentos/{id_atendimento}/procedimentos/{id_procedimento}
 DELETE FROM PROCEDIMENTO_REALIZADO
-WHERE id_atendimento = 1 
-  AND id_procedimento = 5 
-  AND faturado = FALSE;
+WHERE id_atendimento = %s 
+    AND id_procedimento = %s 
+    AND faturado = FALSE;
 
 -- Calcular o tempo médio de duração dos atendimentos por residente
 -- Mapeamento CRUD: READ / Sugestão de Rota API: GET /residentes/metricas/tempo-medio-atendimento
