@@ -46,7 +46,7 @@ WHERE id_pessoa = %s;
 DELETE FROM PROCEDIMENTO_REALIZADO
 WHERE id_atendimento = %s 
     AND id_procedimento = %s 
-    AND faturado = %s;
+    AND faturado = FALSE;
 
 -- Calcular o tempo médio de duração dos atendimentos por residente
 -- Mapeamento CRUD: READ / Sugestão de Rota API: GET /residentes/metricas/tempo-medio-atendimento
