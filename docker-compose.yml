@@ -30,6 +30,7 @@ services:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     volumes:
       - ./backend:/app
+      - ./sql:/sql
     ports:
       - "8000:8000"
     depends_on:
