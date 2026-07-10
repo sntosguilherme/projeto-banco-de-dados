@@ -1,0 +1,7 @@
+DB_NAME=HYMB_db
+DB_USER=postgres
+DB_PASSWORD=bonanza
+DB_HOST=localhost
+DB_PORT=5432
+
+DATABASE_URL=postgresql://postgres:bonanza@db:5432/HYMB_db
