@@ -3,7 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_db_connection
-from app.routers import pacientes, atendimentos, procedimentos
+from app.routers import pacientes, atendimentos, procedimentos, relatorios
+
 
 # Criação da instância do FastAPI com o título "Sistema Hospitalar Dra. Yuska Maritan Brito".
 app = FastAPI(title="Sistema Hospitalar Dra. Yuska Maritan Brito")
@@ -21,6 +22,7 @@ app.add_middleware(
 app.include_router(pacientes.router)
 app.include_router(atendimentos.router)
 app.include_router(procedimentos.router)
+app.include_router(relatorios.router)
 
 # rota para verificar a saúde da API e a conexão com o banco de dados.
 @app.get("/health") 
