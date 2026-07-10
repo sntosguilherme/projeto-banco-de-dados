@@ -29,14 +29,13 @@ def atualizar_paciente(id_paciente: int, dados: PacienteUpdate):
         with get_db_connection() as conn:
             with conn: 
                 with conn.cursor() as cursor:
-            with conn.cursor() as cursor:
-                if dados.num_convenio is not None:
-                    sql = load_query(ARQUIVO_SQL, "atualizar_paciente_convenio")
-                    cursor.execute(sql, (dados.num_convenio, id_paciente))
-
-                if dados.alergias is not None:
-                    sql = load_query(ARQUIVO_SQL, "atualizar_paciente_alergias")
-                    cursor.execute(sql, (dados.alergias, id_paciente))
+                    if dados.num_convenio is not None:
+                        sql = load_query(ARQUIVO_SQL, "atualizar_paciente_convenio")
+                        cursor.execute(sql, (dados.num_convenio, id_paciente))
+    
+                    if dados.alergias is not None:
+                        sql = load_query(ARQUIVO_SQL, "atualizar_paciente_alergias")
+                        cursor.execute(sql, (dados.alergias, id_paciente))
 
         return PacienteUpdateOut(id_pessoa=id_paciente)
 
