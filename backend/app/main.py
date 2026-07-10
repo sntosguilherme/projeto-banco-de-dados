@@ -3,7 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_db_connection
-from app.routers import pacientes, atendimentos, procedimentos
+from app.routers import pacientes, atendimentos, procedimentos, relatorios, health
+
 
 # Criação da instância do FastAPI com o título "Sistema Hospitalar Dra. Yuska Maritan Brito".
 app = FastAPI(title="Sistema Hospitalar Dra. Yuska Maritan Brito")
@@ -21,19 +22,5 @@ app.add_middleware(
 app.include_router(pacientes.router)
 app.include_router(atendimentos.router)
 app.include_router(procedimentos.router)
-
-# rota para verificar a saúde da API e a conexão com o banco de dados.
-@app.get("/health") 
-def health():
-    try:
-        
-        # Testa a conexão com o banco de dados PostgreSQL usando a função get_db_connection() definida em app/database.py.
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1;")
-                cur.fetchone()
-                
-        return {"status": "ok", "db": "up"}
-        
-    except Exception as e:
-        return {"status": "error", "db": "down", "detail": str(e)}
+app.include_router(relatorios.router)
+app.include_router(health.router)  

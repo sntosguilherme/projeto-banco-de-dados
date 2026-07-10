@@ -2,7 +2,8 @@
 -- Inserir um novo atendimento
 -- Mapeamento CRUD: CREATE / Sugestão de Rota API: POST /atendimentos
 INSERT INTO ATENDIMENTO (data_hora, duracao_minutos, id_paciente, id_residente, id_preceptor)
-VALUES (%s, %s, %s, %s, %s);
+VALUES (%s, %s, %s, %s, %s)
+RETURNING id_atendimento;
 
 -- listar_atendimentos
 -- Listar todos os atendimentos de um paciente específico

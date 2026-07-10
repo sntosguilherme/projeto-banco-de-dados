@@ -1,3 +1,4 @@
+-- ranking_residentes_atendimentos
 -- 1) RANKING DOS RESIDENTES POR QTD DE ATENDIMENTOS
 SELECT
     pessoa.nome AS residente,
@@ -23,6 +24,7 @@ GROUP BY pessoa.nome
 -- do que mais atendeu pro que menos
 ORDER BY total_atendimentos DESC;
 
+-- preceptores_mais_de_5_atendimentos_mes
 -- 2) PRECEPTORES COM MAIS DE 5 ATENDIMENTOS NUM MÊS
 SELECT
     p.nome AS preceptor,
@@ -51,6 +53,7 @@ GROUP BY p.nome, DATE_TRUNC('month', atendimento.data_hora)
 HAVING COUNT(atendimento.id_atendimento) > 5
 ORDER BY mes, total_atendimentos DESC;
 
+-- plantoes_por_residente_unidade
 -- 3) PLANTÕES ESCALADOS POR RESIDENTE, POR UNIDADE
 SELECT
     u.nome AS unidade,
@@ -71,6 +74,7 @@ FROM ESCALA e
 GROUP BY u.nome, p.nome
 ORDER BY u.nome, qtd_plantoes_semanais DESC;
 
+-- pacientes_sem_procedimento_alto_risco
 -- 4) PACIENTES QUE NUNCA FIZERAM PROCEDIMENTO DE RISCO 'ALTO'
 SELECT p.nome AS paciente
 FROM PACIENTE pac
@@ -82,8 +86,7 @@ WHERE pac.id_pessoa NOT IN (
     FROM ATENDIMENTO a
         -- PROCEDIMENTO_REALIZADO é a tabela que liga atendimento com
         -- procedimento (um atendimento pode ter vários procedimentos e
-        -- vice versa), por isso precisa passar por ela pra chegar no
-        -- nivel_risco
+        -- vice versa), por isso precisa passar por ela pra chegar no nivel_risco
         JOIN PROCEDIMENTO_REALIZADO pre ON pre.id_atendimento = a.id_atendimento
         -- nivel_risco só existe lá em PROCEDIMENTO mesmo
         JOIN PROCEDIMENTO proc ON proc.id_procedimento = pre.id_procedimento
