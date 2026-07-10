@@ -27,6 +27,8 @@ def listar_atendimentos_do_paciente(id_paciente: int):
 def atualizar_paciente(id_paciente: int, dados: PacienteUpdate):
     try:
         with get_db_connection() as conn:
+            with conn: 
+                with conn.cursor() as cursor:
             with conn.cursor() as cursor:
                 if dados.num_convenio is not None:
                     sql = load_query(ARQUIVO_SQL, "atualizar_paciente_convenio")
