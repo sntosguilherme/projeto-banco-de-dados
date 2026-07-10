@@ -15,7 +15,7 @@ ARQUIVO_SQL = "04_analytical_queries.sql"
 
 @router.get("/residentes/ranking", response_model=list[RankingResidenteOut])
 def ranking_residentes():
-    """Ranking dos residentes por quantidade total de atendimentos realizados."""
+    # Ranking dos residentes com base na quantidade de atendimentos realizados.
     query = load_query(ARQUIVO_SQL, "ranking_residentes_atendimentos")
     with get_db_connection() as conn:
         with conn.cursor() as cur:
@@ -25,7 +25,7 @@ def ranking_residentes():
 
 @router.get("/preceptores/supervisao", response_model=list[PreceptorSupervisorOut])
 def preceptores_mais_de_5_atendimentos():
-    """Preceptores que supervisionaram mais de 5 atendimentos em algum mês."""
+    # Preceptores que supervisionaram mais de 5 atendimentos em um mês específico.
     query = load_query(ARQUIVO_SQL, "preceptores_mais_de_5_atendimentos_mes")
     with get_db_connection() as conn:
         with conn.cursor() as cur:
@@ -35,7 +35,7 @@ def preceptores_mais_de_5_atendimentos():
 
 @router.get("/unidades/plantoes", response_model=list[PlantaoPorUnidadeOut])
 def plantoes_por_unidade():
-    """Quantidade de plantões escalados por residente, agrupado por unidade."""
+    # Quantidade de plantões realizados por residente em cada unidade hospitalar.
     query = load_query(ARQUIVO_SQL, "plantoes_por_residente_unidade")
     with get_db_connection() as conn:
         with conn.cursor() as cur:
@@ -48,7 +48,7 @@ def plantoes_por_unidade():
     response_model=list[PacienteSemProcedimentoAltoRiscoOut],
 )
 def pacientes_sem_procedimento_alto_risco():
-    """Pacientes que nunca realizaram nenhum procedimento de risco ALTO."""
+    # Pacientes que não receberam nenhum procedimento de alto risco durante seus atendimentos.
     query = load_query(ARQUIVO_SQL, "pacientes_sem_procedimento_alto_risco")
     with get_db_connection() as conn:
         with conn.cursor() as cur:
