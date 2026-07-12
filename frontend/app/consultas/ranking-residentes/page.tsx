@@ -1,31 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { buscarRankingResidentes } from '@/services/api'; // Ajuste o caminho se sua pasta services estiver direto na raiz
+// Importa a função e a interface unificada direto do api.ts (usando caminho relativo seguro)
+import { buscarRankingResidentes, ResidenteRanking } from '../../../services/api'; 
 import { Trophy, Medal, Award, AlertTriangle, RefreshCw } from 'lucide-react';
-
-// Interface baseada no retorno esperado da sua query de ranking do FastAPI
-interface ResidenteRanking {
-  id_residente: number;
-  residente: string;
-  especialidade: string;
-  ano_residencia: string;
-  total_atendimentos: number;
-}
 
 export default function RankingPage() {
   const [ranking, setRanking] = useState<ResidenteRanking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  // Função isolada para buscar os dados (permite recarregar se der erro)
+  // Função para buscar os dados do FastAPI
   const carregarRanking = async () => {
     setLoading(true);
     setErro(null);
     try {
       const dados = await buscarRankingResidentes();
-      // Garante que o retorno é uma lista antes de salvar no estado
-      setRanking(Array.isArray(dados) ? dados : []);
+      setRanking(dados);
     } catch (err: any) {
       console.error('Erro ao buscar o ranking:', err);
       setErro(err.message || 'Não foi possível carregar o ranking de residentes.');
@@ -38,11 +29,15 @@ export default function RankingPage() {
     carregarRanking();
   }, []);
 
-  // Helper para renderizar um icone de trofeu para o primeiro lugar do ranking
-  const renderizarMedalha = (posicao: number) => {
+  // Helper para renderizar os ícones de pódio para os 3 primeiros colocados
+  const renderizarTrofeu = (posicao: number) => {
     switch (posicao) {
       case 0:
-        return <Trophy className="h-6 w-6 text-amber-500 inline-block" aria-label="1º Lugar" />;
+        return (
+          <span title="1º Lugar">
+            <Trophy className="h-6 w-6 text-amber-500 inline-block" />
+          </span>
+        );
       default:
         return <span className="text-sm font-medium text-neutral-500">{posicao + 1}º</span>;
     }
@@ -50,14 +45,14 @@ export default function RankingPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* cabeçalho */}
+      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-neutral-200 pb-4 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">
-            Ranking de Residentes por Atendimentos
+            Ranking de Residentes
           </h1>
           <p className="text-sm text-neutral-500">
-             Baseada no volume total de atendimentos realizados.
+            Produtividade analítica baseada no volume total de atendimentos realizados.
           </p>
         </div>
         <button
@@ -70,16 +65,16 @@ export default function RankingPage() {
         </button>
       </div>
 
-      {/* estado de carregamento */}
+      {/* Estado de Carregamento */}
       {loading && (
         <div className="flex flex-col items-center justify-center p-12 text-center border border-neutral-200 rounded-xl bg-neutral-50/50">
           <RefreshCw className="h-8 w-8 text-neutral-400 animate-spin mb-3" />
           <p className="text-sm font-medium text-neutral-600">Buscando métricas no back-end conteinerizado...</p>
-          <p className="text-xs text-neutral-400 mt-1">Isso pode levar alguns segundos dependendo das suas queries SQL.</p>
+          <p className="text-xs text-neutral-400 mt-1">Processando agrupamentos do banco Postgres...</p>
         </div>
       )}
 
-      {/* estado de erro */}
+      {/* Estado de Erro */}
       {erro && !loading && (
         <div className="flex gap-3 items-start border border-red-200 bg-red-50 p-4 rounded-xl text-red-800">
           <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
@@ -87,13 +82,13 @@ export default function RankingPage() {
             <h4 className="font-semibold text-sm">Falha na comunicação com a API</h4>
             <p className="text-xs text-red-700">{erro}</p>
             <p className="text-xs text-red-600 font-medium mt-2">
-              Verifique se o seu container FastAPI está ativo e se as tabelas do banco de dados foram populadas.
+              Verifique se o seu container FastAPI está ativo e se a consulta SQL possui as colunas agrupadas corretamente.
             </p>
           </div>
         </div>
       )}
 
-      {/* estado para retorno vazio */}
+      {/* Estado Vazio (Sem dados retornados) */}
       {!loading && !erro && ranking.length === 0 && (
         <div className="text-center p-12 border border-dashed border-neutral-300 rounded-xl text-neutral-500">
           <p className="text-sm font-medium">Nenhum registro de atendimento encontrado.</p>
@@ -101,7 +96,7 @@ export default function RankingPage() {
         </div>
       )}
 
-      {/* renderizando tabela de dados */}
+      {/* Tabela de Dados (Renderizada com Sucesso) */}
       {!loading && !erro && ranking.length > 0 && (
         <div className="overflow-hidden border border-neutral-200 rounded-xl bg-white shadow-sm">
           <div className="overflow-x-auto">
@@ -117,20 +112,19 @@ export default function RankingPage() {
               </thead>
               <tbody className="divide-y divide-neutral-200 bg-white">
                 {ranking.map((item, index) => {
-                  // Destaque visual sutil para o Top 3 do pódio
-                  const isTopThree = index < 3;
+                  const isFirst = index == 0; // Destacar o primeiro colocado
                   return (
                     <tr 
-                      key={item.id_residente || index} 
+                      key={index} 
                       className={`hover:bg-neutral-50/70 transition-colors ${
-                        isTopThree ? 'bg-amber-50/10 font-medium text-neutral-900' : ''
+                        isFirst ? 'bg-amber-50/10 font-medium text-neutral-900' : ''
                       }`}
                     >
                       <td className="px-6 py-4 text-center whitespace-nowrap">
-                        {renderizarMedalha(index)}
+                        {renderizarTrofeu(index)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={isTopThree ? 'font-semibold' : 'text-neutral-900'}>
+                        <span className={isFirst ? 'font-semibold' : 'text-neutral-900'}>
                           {item.residente}
                         </span>
                       </td>
