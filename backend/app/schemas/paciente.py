@@ -1,4 +1,35 @@
-from pydantic import BaseModel, model_validator
+from datetime import date
+from pydantic import BaseModel, model_validator, Field
+
+
+class PacienteCreate(BaseModel):
+    # Dados da Pessoa
+    nome: str
+    cpf: str
+    data_nascimento: date
+    # aqui é definido um default, não quer dizer que não pode ser mudado
+    is_flamengo: bool = False
+    telefone: str | None = None
+    
+    # Dados do Paciente
+    num_convenio: str | None = None
+    alergias: str | None = None
+    # barra qualquer coisa maior que 3 caracteres
+    grupo_sanguineo: str | None = Field(default=None, max_length=3)
+
+
+class PacienteCreateOut(BaseModel):
+    id_pessoa: int
+    detail: str = "Paciente cadastrado com sucesso"
+
+
+class PacienteOut(BaseModel):
+    id_pessoa: int
+    nome: str
+    cpf: str
+    num_convenio: str | None = None
+    alergias: str | None = None
+    grupo_sanguineo: str | None = None
 
 
 class PacienteUpdate(BaseModel):
