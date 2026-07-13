@@ -10,15 +10,14 @@ from app.schemas.profissional import (
 )
 
 router = APIRouter(tags=["Profissionais"])
-ARQUIVO_SQL_PESSOA = "03_crud_and_basic_queries.sql"
-ARQUIVO_SQL_PROF = "05_profissionais.sql"
+ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
 
 @router.post("/residentes", response_model=ResidenteCreateOut, status_code=201)
 def criar_residente(residente: ResidenteCreate):
     try:
-        sql_pessoa = load_query(ARQUIVO_SQL_PESSOA, "inserir_pessoa")
-        sql_profissional = load_query(ARQUIVO_SQL_PROF, "inserir_profissional")
-        sql_residente = load_query(ARQUIVO_SQL_PROF, "inserir_residente")
+        sql_pessoa = load_query(ARQUIVO_SQL, "inserir_pessoa")
+        sql_profissional = load_query(ARQUIVO_SQL, "inserir_profissional")
+        sql_residente = load_query(ARQUIVO_SQL, "inserir_residente")
         
         with get_db_connection() as conn:
             with conn: 
@@ -57,9 +56,9 @@ def criar_residente(residente: ResidenteCreate):
 @router.post("/preceptores", response_model=PreceptorCreateOut, status_code=201)
 def criar_preceptor(preceptor: PreceptorCreate):
     try:
-        sql_pessoa = load_query(ARQUIVO_SQL_PESSOA, "inserir_pessoa")
-        sql_profissional = load_query(ARQUIVO_SQL_PROF, "inserir_profissional")
-        sql_preceptor = load_query(ARQUIVO_SQL_PROF, "inserir_preceptor")
+        sql_pessoa = load_query(ARQUIVO_SQL, "inserir_pessoa")
+        sql_profissional = load_query(ARQUIVO_SQL, "inserir_profissional")
+        sql_preceptor = load_query(ARQUIVO_SQL, "inserir_preceptor")
         
         with get_db_connection() as conn:
             with conn: 
@@ -98,7 +97,7 @@ def criar_preceptor(preceptor: PreceptorCreate):
 @router.get("/profissionais", response_model=list[ProfissionalOut])
 def listar_profissionais():
     try:
-        sql = load_query(ARQUIVO_SQL_PROF, "listar_profissionais")
+        sql = load_query(ARQUIVO_SQL, "listar_profissionais")
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(sql)
