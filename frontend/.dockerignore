@@ -1,0 +1,16 @@
+# Ignora dependências locais para não dar conflito com o Linux do container
+node_modules
+/node_modules
+
+# Ignora builds locais antigos do Next.js
+.next
+out
+build
+
+# Ignora arquivos de controle de versão
+.git
+.gitignore
+
+# Ignora configurações locais de ambiente e documentação
+.env*.local
+README.md
