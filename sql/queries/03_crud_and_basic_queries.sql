@@ -94,3 +94,36 @@ SELECT
 FROM PACIENTE pac
 JOIN PESSOA pes ON pac.id_pessoa = pes.id_pessoa
 ORDER BY pes.nome ASC;
+
+-- verificar_atendimento_existe
+-- Verificar se o atendimento especificado existe
+-- Mapeamento CRUD: READ
+SELECT 1 FROM ATENDIMENTO WHERE id_atendimento = %s;
+
+-- verificar_procedimento_existe
+-- Verificar se o procedimento especificado existe
+-- Mapeamento CRUD: READ
+SELECT 1 FROM PROCEDIMENTO WHERE id_procedimento = %s;
+
+-- inserir_procedimento_realizado
+-- Inserir um procedimento realizado em um atendimento e retorna os dados recem criados
+-- Mapeamento CRUD: CREATE / Rota API: POST /atendimentos/{id_atendimento}/procedimentos
+INSERT INTO PROCEDIMENTO_REALIZADO (id_atendimento, id_procedimento, quantidade, tempo_real_minutos, observacao)
+VALUES (%s, %s, %s, %s, %s)
+RETURNING id_atendimento, id_procedimento, quantidade, tempo_real_minutos, observacao;
+
+-- listar_historico_atendimentos
+-- Listar o histórico completo de todos os atendimentos
+-- Mapeamento CRUD: READ / Rota API: GET /atendimentos
+SELECT
+    a.id_atendimento,
+    a.data_hora,
+    a.duracao_minutos,
+    p.nome AS nome_paciente,
+    r.nome AS nome_residente,
+    pr.nome AS nome_preceptor
+FROM ATENDIMENTO a
+JOIN PESSOA p ON a.id_paciente = p.id_pessoa
+JOIN PESSOA r ON a.id_residente = r.id_pessoa
+JOIN PESSOA pr ON a.id_preceptor = pr.id_pessoa
+ORDER BY a.data_hora DESC;

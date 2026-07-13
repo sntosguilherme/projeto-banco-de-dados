@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 # GET /atendimentos/{id_atendimento}/procedimentos
@@ -16,3 +17,19 @@ class ProcedimentoRealizadoDeleteOut(BaseModel):
     id_atendimento: int
     id_procedimento: int
     detail: str = "Procedimento removido com sucesso"
+
+# POST /atendimentos/{id_atendimento}/procedimentos
+class ProcedimentoRealizadoCreate(BaseModel):
+    # Cria um novo procedimento realizado em um atendimento específico.
+    id_procedimento: int
+    quantidade: int
+    tempo_real_minutos: int
+    observacao: Optional[str] = None
+
+class ProcedimentoRealizadoCreateOut(BaseModel):
+    # Retorna os dados do procedimento realizado criado.
+    id_atendimento: int
+    id_procedimento: int
+    quantidade: int
+    tempo_real_minutos: int
+    observacao: Optional[str] = None

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.database import get_db_connection
 from app.sql_loader import load_query
-from app.schemas.atendimento import AtendimentoCreate, AtendimentoCreateOut
+from app.schemas.atendimento import AtendimentoCreate, AtendimentoCreateOut, AtendimentoOut
 from psycopg2 import errors as pg_errors
 
 router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])
@@ -31,5 +31,19 @@ def criar_atendimento(dados: AtendimentoCreate):
             status_code=404,
             detail="Paciente, residente ou preceptor informado não existe.",
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# Rota para listar o histórico geral de todos os atendimentos
+@router.get("", response_model=list[AtendimentoOut])
+def listar_historico_atendimentos():
+    try:
+        sql = load_query(ARQUIVO_SQL, "listar_historico_atendimentos")
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(sql)
+                return cursor.fetchall()
+                
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
