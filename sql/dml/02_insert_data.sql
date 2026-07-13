@@ -4,6 +4,9 @@
 --   Pacientes:   Hugo, Pedrão, Ruan, Carol, Marcelo, Ju, Anna, Yan,
 --                David, Mathes (também paciente), extra             (ids 11-20)
 
+-- QUANTIDADE DE CADA ENTIDADE: 
+-- 5 residentes, 5 preceptores, 10 pacientes, 5 unidades, 12 procedimentos, 17 atendimentos,
+-- 23 procedimentos realizados, 20 escalas (distribuídas em 5 unidades, 4 dias da semana, 4 turnos)
 
 -- PESSOA
 INSERT INTO PESSOA (nome, cpf, data_nascimento, is_flamengo, telefone) VALUES
@@ -70,8 +73,6 @@ INSERT INTO PACIENTE (id_pessoa, num_convenio, alergias, grupo_sanguineo) VALUES
 (20, 'AMIL-1',      'Segunda-Feira',                     'AB-');
 
 
-
-
 -- UNIDADE
 INSERT INTO UNIDADE (nome, tipo, capacidade_leitos) VALUES
 ('UTI Adulto', 'UTI', 10),
@@ -108,7 +109,14 @@ INSERT INTO ATENDIMENTO (data_hora, duracao_minutos, id_paciente, id_residente, 
 ('2025-06-07 08:30:00', 120, 17, 2, 6), -- (PAC) Anna / (RES) Borges / (PRE) Beca
 ('2025-06-08 13:00:00', 25, 18, 3, 10), -- (PAC) Yan / (RES) Zé / (PRE) Yuri
 ('2025-06-09 07:45:00', 75, 19, 4, 8), -- (PAC) David / (RES) Mikael / (PRE) Lara
-('2025-06-10 15:20:00', 40, 20, 5, 9); -- (PAC) Bruno / (RES) MatheUs / (PRE) Mark
+('2025-06-10 15:20:00', 40, 20, 5, 9), -- (PAC) Bruno / (RES) MatheUs / (PRE) Mark
+('2025-06-11 08:00:00', 30, 11, 1, 6),  -- (PAC) Hugo / (RES) Guimas / (PRE) Beca
+('2025-06-12 09:00:00', 40, 12, 2, 6),  -- (PAC) Pedrão / (RES) Borges / (PRE) Beca
+('2025-06-13 10:00:00', 25, 13, 3, 6),  -- (PAC) Ruan / (RES) Zé Freire / (PRE) Beca
+('2025-06-14 11:00:00', 55, 14, 4, 6),  -- (PAC) Carol / (RES) Mikael / (PRE) Beca
+('2025-06-15 12:00:00', 20, 15, 5, 6),  -- (PAC) Marcelo / (RES) Matheus / (PRE) Beca
+('2025-06-16 13:00:00', 35, 16, 1, 6),  -- (PAC) Ju / (RES) Guimas / (PRE) Beca 
+('2025-06-17 14:00:00', 45, 17, 2, 6);  -- (PAC) Anna / (RES) Borges / (PRE) Beca (8º)
 
 
 -- PROCEDIMENTO REALIZADO
@@ -125,8 +133,17 @@ INSERT INTO PROCEDIMENTO_REALIZADO (id_atendimento, id_procedimento, quantidade,
 (7, 9, 1, 20, 'Intubação pós-desfibrilação', FALSE),
 (8, 2, 1, 5, NULL, TRUE),
 (9, 11, 1, 4, 'Band-aid no dedão com direito a sopro', FALSE),
-(10, 12, 1, 6, 'Termômetro quebrou no meio', FALSE);
-
+(10, 12, 1, 6, 'Termômetro quebrou no meio', FALSE),
+(11, 4, 1, 8, 'Coleta de rotina', TRUE),
+(12, 1, 1, 12, NULL, FALSE),
+(13, 3, 1, 9, 'Curativo pós-procedimento', FALSE),
+(14, 7, 1, 11, 'ECG de rotina', TRUE),
+(15, 2, 1, 5, NULL, FALSE),
+(16, 5, 1, 26, 'Sutura em antebraço', FALSE),
+(17, 6, 1, 19, 'Sondagem vesical', TRUE),
+(11, 2, 1, 5, 'Aferição de pressão', FALSE),
+(14, 4, 1, 7, 'Coleta pré-ECG', TRUE),
+(17, 9, 1, 21, 'Intubação de emergência', FALSE);
 
 -- ESCALA
 INSERT INTO ESCALA (id_unidade, dia_semana, turno, id_residente, id_preceptor) VALUES
