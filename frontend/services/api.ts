@@ -18,7 +18,10 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// BASE 
+// =====================================================================
+// 1. INTERFACES BASE E INPUTS DE FORMULÁRIO (CRUD)
+// =====================================================================
+
 export interface Pessoa {
   nome: string;
   cpf: string;
@@ -27,7 +30,6 @@ export interface Pessoa {
   telefone?: string;
 }
 
-// PACIENTES 
 export interface Paciente extends Pessoa {
   id_paciente: number;
   num_convenio?: string;
@@ -37,7 +39,6 @@ export interface Paciente extends Pessoa {
 export type CriarPacienteInput = Omit<Paciente, 'id_paciente'>;
 export type AtualizarPacienteInput = Pick<Paciente, 'num_convenio' | 'alergias'>;
 
-// PROFISSIONAIS
 export interface Profissional extends Pessoa {
   crm: string;
   data_admissao: string;
@@ -56,7 +57,6 @@ export interface Preceptor extends Profissional {
 }
 export type CriarPreceptorInput = Omit<Preceptor, 'id_preceptor'>;
 
-// ATENDIMENTOS
 export interface Atendimento {
   id_atendimento: number;
   data_hora: string;
@@ -67,7 +67,6 @@ export interface Atendimento {
 }
 export type CriarAtendimentoInput = Omit<Atendimento, 'id_atendimento'>;
 
-// PROCEDIMENTOS 
 export interface ProcedimentoAtendimento {
   id_procedimento: number;
   quantidade: number;
@@ -75,59 +74,62 @@ export interface ProcedimentoAtendimento {
   observacao?: string;
 }
 
-// ATENDIMENTOS
+// =====================================================================
+// 2. INTERFACES EXATAS DAS QUERIES DE LISTAGEM GERAL
+// =====================================================================
 
-// POST /atendimentos 
-export function criarAtendimento(dados: CriarAtendimentoInput) {
-  return apiFetch<{ id_atendimento: number }>("/atendimentos", {
-    method: "POST",
-    body: JSON.stringify(dados),
-  });
+export interface PacienteGeral {
+  id_pessoa: number;
+  nome: string;
+  cpf: string;
+  num_convenio?: string;
+  alergias?: string;
+  grupo_sanguineo?: string;
 }
 
-// GET /pacientes/{id}/atendimentos 
-export function listarAtendimentosDoPaciente(idPaciente: number) {
-  return apiFetch<Atendimento[]>(`/pacientes/${idPaciente}/atendimentos`);
+export interface ProfissionalGeral {
+  id_pessoa: number;
+  nome: string;
+  crm: string;
+  especialidade: string;
+  papel: 'Residente' | 'Preceptor' | null;
+  ano_residencia?: number;
+  titulacao?: string;
 }
 
-// GET /atendimentos — histórico geral
-export function listarHistoricoAtendimentos() {
-  return apiFetch<Atendimento[]>("/atendimentos");
+// =====================================================================
+// 3. INTERFACES DAS QUERIES ANALÍTICAS / RELATÓRIOS
+// =====================================================================
+
+export interface ResidenteRanking {
+  nome: string;
+  total_atendimentos: number;
 }
 
-// PROCEDIMENTOS DO ATENDIMENTO
-
-// GET /atendimentos/{id}/procedimentos 
-export function listarProcedimentosDoAtendimento(idAtendimento: number) {
-  return apiFetch<ProcedimentoAtendimento[]>(`/atendimentos/${idAtendimento}/procedimentos`);
+export interface PreceptorSupervisao {
+  nome: string;
+  mes: string;
+  total_atendimentos: number;
 }
 
-// POST /atendimentos/{id}/procedimentos
-export function adicionarProcedimento(idAtendimento: number, dados: ProcedimentoAtendimento) {
-  return apiFetch<ProcedimentoAtendimento>(`/atendimentos/${idAtendimento}/procedimentos`, {
-    method: "POST",
-    body: JSON.stringify(dados),
-  });
+export interface PlantoesUnidade {
+  unidade: string;
+  nome: string;
+  qtd_plantoes_semanais: number;
 }
 
-// DELETE /atendimentos/{id}/procedimentos/{id} 
-export function removerProcedimento(idAtendimento: number, idProcedimento: number) {
-  return apiFetch<{ sucesso: boolean }>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
-    method: "DELETE",
-  });
+export interface PacienteSemRisco {
+  nome: string;
+  cpf?: string;
+  num_convenio?: string;
+  alergias?: string;
 }
 
-// PACIENTES
+// =====================================================================
+// 4. MÉTODOS DE CHAMADA DA API (ROTAS)
+// =====================================================================
 
-// PATCH /pacientes/{id} — Atualização parcial
-export function atualizarPaciente(idPaciente: number, dados: AtualizarPacienteInput) {
-  return apiFetch<Paciente>(`/pacientes/${idPaciente}`, {
-    method: "PATCH",
-    body: JSON.stringify(dados),
-  });
-}
-
-// POST /pacientes
+// --- PACIENTES ---
 export function criarPaciente(dados: CriarPacienteInput) {
   return apiFetch<{ id_paciente: number }>("/pacientes", {
     method: "POST",
@@ -135,14 +137,18 @@ export function criarPaciente(dados: CriarPacienteInput) {
   });
 }
 
-// GET /pacientes
-export function listarPacientes() {
-  return apiFetch<Paciente[]>("/pacientes");
+export function atualizarPaciente(idPaciente: number, dados: AtualizarPacienteInput) {
+  return apiFetch<Paciente>(`/pacientes/${idPaciente}`, {
+    method: "PATCH",
+    body: JSON.stringify(dados),
+  });
 }
 
-// PROFISSIONAIS (Residentes e Preceptores)
+export function buscarPacientes() {
+  return apiFetch<PacienteGeral[]>("/pacientes");
+}
 
-// POST /residentes
+// --- PROFISSIONAIS ---
 export function criarResidente(dados: CriarResidenteInput) {
   return apiFetch<{ id_residente: number }>("/residentes", {
     method: "POST",
@@ -150,7 +156,6 @@ export function criarResidente(dados: CriarResidenteInput) {
   });
 }
 
-// POST /preceptores
 export function criarPreceptor(dados: CriarPreceptorInput) {
   return apiFetch<{ id_preceptor: number }>("/preceptores", {
     method: "POST",
@@ -158,84 +163,61 @@ export function criarPreceptor(dados: CriarPreceptorInput) {
   });
 }
 
-// GET /profissionais
-export function listarProfissionais() {
-  return apiFetch<Profissional[]>("/profissionais");
+export function buscarProfissionais() {
+  return apiFetch<ProfissionalGeral[]>("/profissionais");
 }
 
-// RELATÓRIOS / CONSULTAS ANALÍTICAS 
-
-export interface ResidenteRanking {
-  residente: string;
-  especialidade: string;
-  ano_residencia: string;
-  total_atendimentos: number;
+// --- ATENDIMENTOS ---
+export function criarAtendimento(dados: CriarAtendimentoInput) {
+  return apiFetch<{ id_atendimento: number }>("/atendimentos", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
 }
 
-export interface PacienteSemRisco {
-  id_paciente: number;
-  nome: string;
-  cpf?: string;
-  num_convenio?: string;
-  alergias?: string;
+export function listarAtendimentosDoPaciente(idPaciente: number) {
+  return apiFetch<Atendimento[]>(`/pacientes/${idPaciente}/atendimentos`);
 }
 
-// ---------------------------------------------------------------------
-// RELATÓRIOS / CONSULTAS ANALÍTICAS 
-// ---------------------------------------------------------------------
-
-// Query 1: Retorna 'nome' e 'total_atendimentos'
-export interface ResidenteRanking {
-  nome: string;
-  total_atendimentos: number;
+export function listarHistoricoAtendimentos() {
+  return apiFetch<Atendimento[]>("/atendimentos");
 }
 
-// Query 2: Retorna 'nome', 'mes' e 'total_atendimentos'
-export interface PreceptorSupervisao {
-  nome: string;
-  mes: string;
-  total_atendimentos: number;
+// --- PROCEDIMENTOS DO ATENDIMENTO ---
+export function listarProcedimentosDoAtendimento(idAtendimento: number) {
+  return apiFetch<ProcedimentoAtendimento[]>(`/atendimentos/${idAtendimento}/procedimentos`);
 }
 
-// Query 3: Retorna 'unidade', 'nome' e 'qtd_plantoes_semanais'
-export interface PlantoesUnidade {
-  unidade: string;
-  nome: string;
-  qtd_plantoes_semanais: number;
+export function adicionarProcedimento(idAtendimento: number, dados: ProcedimentoAtendimento) {
+  return apiFetch<ProcedimentoAtendimento>(`/atendimentos/${idAtendimento}/procedimentos`, {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
 }
 
-// Query 4: Retorna apenas 'nome' (as outras colunas opcionais ficam blindadas)
-export interface PacienteSemRisco {
-  nome: string;
-  cpf?: string;
-  num_convenio?: string;
-  alergias?: string;
+export function removerProcedimento(idAtendimento: number, idProcedimento: number) {
+  return apiFetch<{ sucesso: boolean }>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
+    method: "DELETE",
+  });
 }
 
-// --- Funções da API com os tipos acoplados ---
-
-// 1) GET /residentes/ranking
+// --- RELATÓRIOS / CONSULTAS ANALÍTICAS ---
 export function buscarRankingResidentes() {
   return apiFetch<ResidenteRanking[]>("/residentes/ranking");
 }
 
-// 2) GET /preceptores/supervisao (Preceptores com mais de 5 atendimentos/mês)
 export function buscarPreceptoresSupervisao() {
   return apiFetch<PreceptorSupervisao[]>("/preceptores/supervisao");
 }
 
-// 3) GET /unidades/plantoes (Plantões por residente e unidade)
 export function buscarPlantoesPorUnidade() {
   return apiFetch<PlantoesUnidade[]>("/unidades/plantoes");
 }
 
-// 4) GET /pacientes/sem-procedimento-alto-risco
 export function buscarPacientesSemRiscoAlto() {
   return apiFetch<PacienteSemRisco[]>("/pacientes/sem-procedimento-alto-risco");
 }
 
-// Extra: Caso use a rota de tempo médio futuramente
 export function buscarTempoMedioPorResidente() {
   return apiFetch<any>("/residentes/metricas/tempo-medio-atendimento");
 }
-
