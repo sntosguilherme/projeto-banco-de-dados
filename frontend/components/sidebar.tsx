@@ -45,6 +45,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         { label: 'Supervisão de Preceptores', href: '/consultas/preceptores-supervisao', icon: ClipboardCheck },
         // app/consultas/plantoes-unidade/page.tsx
         { label: 'Plantões por Unidade', href: '/consultas/plantoes-unidade', icon: Clock },
+        // app/consultas/tempo-medio/page.tsx
+        { label: 'Tempo Médio de Atendimento', href: '/consultas/tempo-medio', icon: Clock },
         // app/consultas/pacientes-sem-risco-alto/page.tsx
         { label: 'Pacientes sem Risco Alto', href: '/consultas/pacientes-sem-risco-alto', icon: AlertTriangle },
       ],
