@@ -140,6 +140,9 @@ export default function AtendimentosPage() {
               </tbody>
             </table>
           </div>
+          <div className="bg-neutral-50 px-6 py-3 border-t border-neutral-200 text-xs text-neutral-500 font-medium">
+            Total de atendimentos listados: {atendimentos.length}
+          </div>
         </div>
       )}
     </div>

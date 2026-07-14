@@ -23,8 +23,8 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
 
   const [formData, setFormData] = useState({
     id_procedimento: '',
-    quantidade: 1,
-    tempo_real_minutos: 0,
+    quantidade: 1 as number | string,
+    tempo_real_minutos: '' as number | string,
     observacao: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,7 +59,7 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value
+      [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value
     }));
   };
 
@@ -71,11 +71,15 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
       setFormError('Informe o procedimento.');
       return;
     }
-    if (formData.quantidade <= 0) {
+    
+    const qtd = Number(formData.quantidade);
+    const tempo = Number(formData.tempo_real_minutos);
+
+    if (qtd <= 0) {
       setFormError('A quantidade deve ser maior que zero.');
       return;
     }
-    if (formData.tempo_real_minutos <= 0) {
+    if (tempo <= 0) {
       setFormError('O tempo do procedimento deve ser maior que zero.');
       return;
     }
@@ -84,8 +88,8 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
       setIsSubmitting(true);
       await adicionarProcedimento(atendimentoId, {
         id_procedimento: Number(formData.id_procedimento),
-        quantidade: formData.quantidade,
-        tempo_real_minutos: formData.tempo_real_minutos,
+        quantidade: qtd,
+        tempo_real_minutos: tempo,
         observacao: formData.observacao || undefined
       });
       
@@ -102,6 +106,8 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
         setFormError('Este procedimento já está registrado neste atendimento.');
       } else if (msg.includes('404')) {
         setFormError('Procedimento não encontrado. Verifique o ID do procedimento.');
+      } else if (msg.includes('excede a duração') || msg.includes('exceder a duração')) {
+        setFormError(err.message);
       } else if (msg.includes('violates check constraint') || msg.includes('tempo_real_minutos')) {
         setFormError('O tempo e a quantidade do procedimento devem ser maiores que zero.');
       } else {

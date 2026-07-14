@@ -136,9 +136,8 @@ LEFT JOIN PRECEPTOR prec ON prof.id_pessoa = prec.id_profissional
 ORDER BY pes.nome ASC;
 
 -- verificar_atendimento_existe
--- Verificar se o atendimento especificado existe
--- Mapeamento CRUD: READ
-SELECT 1 FROM ATENDIMENTO WHERE id_atendimento = %s;
+-- Mapeamento CRUD: READ / Uso: Validar se um atendimento existe antes de realizar ações dependentes
+SELECT id_atendimento, duracao_minutos FROM ATENDIMENTO WHERE id_atendimento = %s;
 
 -- verificar_procedimento_existe
 -- Verificar se o procedimento especificado existe
@@ -174,3 +173,16 @@ ORDER BY a.data_hora DESC;
 SELECT id_procedimento, codigo, nome, tempo_medio_minutos, nivel_risco 
 FROM PROCEDIMENTO 
 ORDER BY nome ASC;
+
+-- recalcular_duracao_atendimento
+-- Mapeamento CRUD: UPDATE / Uso: Ao adicionar ou remover um procedimento
+UPDATE ATENDIMENTO 
+SET duracao_minutos = (
+    SELECT COALESCE(SUM(tempo_real_minutos), 0) 
+    FROM PROCEDIMENTO_REALIZADO 
+    WHERE id_atendimento = %s
+)
+WHERE id_atendimento = %s;
+
+-- obter_tempo_procedimento
+SELECT tempo_real_minutos FROM PROCEDIMENTO_REALIZADO WHERE id_atendimento = %s AND id_procedimento = %s;
