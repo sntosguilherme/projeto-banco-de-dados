@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.database import get_db_connection
 from app.sql_loader import load_query
-from app.schemas.atendimento import TempoMedioResidenteOut
+from app.schemas.residentes import TempoMedioResidenteOut
 
 router = APIRouter(prefix="/residentes", tags=["Residentes"])
 ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
