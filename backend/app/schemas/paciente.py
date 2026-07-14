@@ -1,5 +1,16 @@
+from enum import Enum
 from datetime import date
 from pydantic import BaseModel, model_validator, Field, field_validator
+
+class GrupoSanguineo(str, Enum):
+    A_POSITIVO = 'A+'
+    A_NEGATIVO = 'A-'
+    B_POSITIVO = 'B+'
+    B_NEGATIVO = 'B-'
+    AB_POSITIVO = 'AB+'
+    AB_NEGATIVO = 'AB-'
+    O_POSITIVO = 'O+'
+    O_NEGATIVO = 'O-'
 
 
 class PacienteCreate(BaseModel):
@@ -21,8 +32,7 @@ class PacienteCreate(BaseModel):
     # Dados do Paciente
     num_convenio: str | None = None
     alergias: str | None = None
-    # barra qualquer coisa maior que 3 caracteres
-    grupo_sanguineo: str | None = Field(default=None, max_length=3)
+    grupo_sanguineo: GrupoSanguineo | None = None
 
 
 class PacienteCreateOut(BaseModel):
@@ -36,7 +46,7 @@ class PacienteOut(BaseModel):
     cpf: str
     num_convenio: str | None = None
     alergias: str | None = None
-    grupo_sanguineo: str | None = None
+    grupo_sanguineo: GrupoSanguineo | None = None
 
 
 class PacienteUpdate(BaseModel):

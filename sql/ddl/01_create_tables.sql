@@ -7,11 +7,13 @@ CREATE TABLE PESSOA (
     telefone VARCHAR(15) CHECK (telefone ~ '^\(\d{2}\) \d{5}-\d{4}$')
 );
 
+CREATE TYPE enum_grupo_sanguineo AS ENUM ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-');
+
 CREATE TABLE PACIENTE (
     id_pessoa INT PRIMARY KEY REFERENCES PESSOA(id_pessoa) ON DELETE CASCADE,
     num_convenio VARCHAR(50),
     alergias TEXT,
-    grupo_sanguineo VARCHAR(3)
+    grupo_sanguineo enum_grupo_sanguineo
 );
 
 CREATE TABLE PROFISSIONAL (

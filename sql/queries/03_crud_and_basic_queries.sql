@@ -79,7 +79,7 @@ RETURNING id_pessoa;
 -- Inserir dados específicos de um paciente requer id_pessoa
 -- Mapeamento CRUD: CREATE
 INSERT INTO PACIENTE (id_pessoa, num_convenio, alergias, grupo_sanguineo)
-VALUES (%s, %s, %s, %s);
+VALUES (%s, %s, %s, %s::enum_grupo_sanguineo);
 
 -- listar_pacientes
 -- Listar todos os pacientes cadastrados com seus dados básicos
