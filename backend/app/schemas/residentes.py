@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 # GET /residentes/metricas/tempo-medio-atendimento
 class TempoMedioResidenteOut(BaseModel):
