@@ -19,5 +19,5 @@ def tempo_medio_atendimento_por_residente():
             with conn.cursor() as cursor:
                 cursor.execute(sql)
                 return cursor.fetchall()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro interno ao buscar métricas de tempo médio de atendimento.")
