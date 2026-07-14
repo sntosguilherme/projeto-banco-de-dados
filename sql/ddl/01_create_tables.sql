@@ -7,11 +7,21 @@ CREATE TABLE PESSOA (
     telefone VARCHAR(15) CHECK (telefone ~ '^\(\d{2}\) \d{5}-\d{4}$')
 );
 
+CREATE TABLE ALERGIA (
+    id_alergia SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE
+);
+
 CREATE TABLE PACIENTE (
     id_pessoa INT PRIMARY KEY REFERENCES PESSOA(id_pessoa) ON DELETE CASCADE,
     num_convenio VARCHAR(50),
-    alergias TEXT,
-    grupo_sanguineo VARCHAR(3)
+    grupo_sanguineo VARCHAR(3) CHECK (grupo_sanguineo IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'))
+);
+
+CREATE TABLE PACIENTE_ALERGIA (
+    id_pessoa INT NOT NULL REFERENCES PACIENTE(id_pessoa) ON DELETE CASCADE,
+    id_alergia INT NOT NULL REFERENCES ALERGIA(id_alergia) ON DELETE CASCADE,
+    PRIMARY KEY (id_pessoa, id_alergia)
 );
 
 CREATE TABLE PROFISSIONAL (

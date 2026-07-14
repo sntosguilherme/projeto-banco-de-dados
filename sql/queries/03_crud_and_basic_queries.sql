@@ -1,9 +1,64 @@
+
+-- atualizar_paciente_convenio
+-- Atualizar os dados de um paciente (convênio)
+-- Mapeamento CRUD: UPDATE / Rota API: PATCH /pacientes/{id_paciente}
+UPDATE PACIENTE
+SET num_convenio = %s
+WHERE id_pessoa = %s;
+
+
 -- inserir_atendimento
 -- Inserir um novo atendimento
 -- Mapeamento CRUD: CREATE / Rota API: POST /atendimentos
 INSERT INTO ATENDIMENTO (data_hora, duracao_minutos, id_paciente, id_residente, id_preceptor)
 VALUES (%s, %s, %s, %s, %s)
 RETURNING id_atendimento;
+
+-- inserir_profissional
+-- Inserir dados específicos de um profissional (requer id_pessoa)
+-- Mapeamento CRUD: CREATE
+INSERT INTO PROFISSIONAL (id_pessoa, crm, data_admissao, especialidade)
+VALUES (%s, %s, %s, %s);
+
+-- inserir_residente
+-- Inserir dados de residente (requer id_profissional)
+-- Mapeamento CRUD: CREATE
+INSERT INTO RESIDENTE (id_profissional, ano_residencia)
+VALUES (%s, %s);
+
+-- inserir_preceptor
+-- Inserir dados de preceptor (requer id_profissional)
+-- Mapeamento CRUD: CREATE
+INSERT INTO PRECEPTOR (id_profissional, titulacao)
+VALUES (%s, %s);
+
+-- inserir_pessoa
+-- Inserir dados básicos de uma pessoa -> usado antes de inserir paciente/profissional
+-- Mapeamento CRUD: CREATE
+INSERT INTO PESSOA (nome, cpf, data_nascimento, is_flamengo, telefone)
+VALUES (%s, %s, %s, %s, %s)
+RETURNING id_pessoa;
+
+-- inserir_paciente
+-- Inserir dados específicos de um paciente requer id_pessoa
+-- Mapeamento CRUD: CREATE
+INSERT INTO PACIENTE (id_pessoa, num_convenio, grupo_sanguineo)
+VALUES (%s, %s, %s);
+
+-- inserir_paciente_alergia
+-- Inserir uma alergia para um paciente (requer id_pessoa e id_alergia)
+-- Mapeamento CRUD: CREATE
+INSERT INTO PACIENTE_ALERGIA (id_pessoa, id_alergia)
+VALUES (%s, %s)
+ON CONFLICT DO NOTHING;
+
+-- inserir_alergia
+-- Inserir uma nova alergia no sistema
+-- Mapeamento CRUD: CREATE
+INSERT INTO ALERGIA (nome)
+VALUES (%s)
+ON CONFLICT (nome) DO UPDATE SET nome = EXCLUDED.nome
+RETURNING id_alergia;
 
 -- listar_atendimentos
 -- Listar todos os atendimentos de um paciente específico
@@ -35,20 +90,6 @@ FROM PROCEDIMENTO_REALIZADO pr
 JOIN PROCEDIMENTO p ON pr.id_procedimento = p.id_procedimento
 WHERE pr.id_atendimento = %s;
 
--- atualizar_paciente_convenio
--- Atualizar os dados de um paciente (convênio)
--- Mapeamento CRUD: UPDATE / Rota API: PATCH /pacientes/{id_paciente}
-UPDATE PACIENTE
-SET num_convenio = %s
-WHERE id_pessoa = %s;
-
--- atualizar_paciente_alergias
--- Atualizar os dados de um paciente (alergias)
--- Mapeamento CRUD: UPDATE / Rota API: PATCH /pacientes/{id_paciente}
-UPDATE PACIENTE
-SET alergias = %s
-WHERE id_pessoa = %s;
-
 -- remover_procedimento
 -- Remover um procedimento realizado
 -- Mapeamento CRUD: DELETE / Rota API: DELETE /atendimentos/{id_atendimento}/procedimentos/{id_procedimento}
@@ -70,18 +111,6 @@ JOIN PESSOA pes ON r.id_profissional = pes.id_pessoa
 GROUP BY r.id_profissional, pes.nome, r.ano_residencia
 ORDER BY tempo_medio_atendimento DESC;
 
--- inserir_pessoa
--- Inserir dados básicos de uma pessoa -> usado antes de inserir paciente/profissional
--- Mapeamento CRUD: CREATE
-INSERT INTO PESSOA (nome, cpf, data_nascimento, is_flamengo, telefone)
-VALUES (%s, %s, %s, %s, %s)
-RETURNING id_pessoa;
-
--- inserir_paciente
--- Inserir dados específicos de um paciente requer id_pessoa
--- Mapeamento CRUD: CREATE
-INSERT INTO PACIENTE (id_pessoa, num_convenio, alergias, grupo_sanguineo)
-VALUES (%s, %s, %s, %s);
 
 -- listar_pacientes
 -- Listar todos os pacientes cadastrados com seus dados básicos
@@ -91,29 +120,20 @@ SELECT
     pes.nome,
     pes.cpf,
     pac.num_convenio,
-    pac.alergias,
-    pac.grupo_sanguineo
+    pac.grupo_sanguineo,
+    COALESCE(STRING_AGG(a.nome, ', '), '') AS alergias -- Listar alergias do paciente, separadas por vírgula
 FROM PACIENTE pac
 JOIN PESSOA pes ON pac.id_pessoa = pes.id_pessoa
+LEFT JOIN PACIENTE_ALERGIA pa ON pa.id_pessoa = pac.id_pessoa
+LEFT JOIN ALERGIA a ON a.id_alergia = pa.id_alergia
+GROUP BY
+    pes.id_pessoa,
+    pes.nome,
+    pes.cpf,
+    pac.num_convenio,
+    pac.grupo_sanguineo
 ORDER BY pes.nome ASC;
 
--- inserir_profissional
--- Inserir dados específicos de um profissional (requer id_pessoa)
--- Mapeamento CRUD: CREATE
-INSERT INTO PROFISSIONAL (id_pessoa, crm, data_admissao, especialidade)
-VALUES (%s, %s, %s, %s);
-
--- inserir_residente
--- Inserir dados de residente (requer id_profissional)
--- Mapeamento CRUD: CREATE
-INSERT INTO RESIDENTE (id_profissional, ano_residencia)
-VALUES (%s, %s);
-
--- inserir_preceptor
--- Inserir dados de preceptor (requer id_profissional)
--- Mapeamento CRUD: CREATE
-INSERT INTO PRECEPTOR (id_profissional, titulacao)
-VALUES (%s, %s);
 
 -- listar_profissionais
 -- Listar todos os profissionais, indicando papel e dados específicos
@@ -186,3 +206,6 @@ WHERE id_atendimento = %s;
 
 -- obter_tempo_procedimento
 SELECT tempo_real_minutos FROM PROCEDIMENTO_REALIZADO WHERE id_atendimento = %s AND id_procedimento = %s;
+
+-- remover_alergias_paciente
+DELETE FROM PACIENTE_ALERGIA WHERE id_pessoa = %s;
