@@ -115,11 +115,16 @@ export default function ListarProfissionaisPage() {
                 {profissionaisFiltrados.map((prof) => (
                   <tr key={prof.id_pessoa} className="hover:bg-neutral-50/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-neutral-100 text-neutral-700 p-1.5 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-neutral-100 text-neutral-700 p-2 rounded-md">
                           <User className="h-4 w-4" />
                         </div>
-                        <span className="font-medium text-neutral-900">{prof.nome}</span>
+                        <div>
+                          <span className="font-medium text-neutral-900 block">{prof.nome}</span>
+                          <span className="text-[11px] font-mono font-medium text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                            ID: {prof.id_pessoa}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap font-mono text-neutral-500">
