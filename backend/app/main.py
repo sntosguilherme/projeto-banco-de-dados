@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_db_connection
-from app.routers import pacientes, atendimentos, procedimentos, relatorios, health, profissionais,residentes
+from app.routers import pacientes, atendimentos, procedimentos, relatorios, health, profissionais, residentes
 
 
 # Criação da instância do FastAPI com o título "Sistema Hospitalar Dra. Yuska Maritan Brito".
