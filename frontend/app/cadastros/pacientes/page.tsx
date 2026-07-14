@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { UserPlus, ShieldAlert, CheckCircle, Save } from 'lucide-react';
+import { criarPaciente } from '../../../services/api';
 
 export default function CadastrarPacientePage() {
   const [formData, setFormData] = useState({
@@ -30,21 +31,16 @@ export default function CadastrarPacientePage() {
     setSucesso(false);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/pacientes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          num_convenio: formData.num_convenio || null,
-          alergias: formData.alergias || null,
-          grupo_sanguineo: formData.grupo_sanguineo || null,
-        }),
+      await criarPaciente({
+        nome: formData.nome,
+        cpf: formData.cpf,
+        data_nascimento: formData.data_nascimento,
+        telefone: formData.telefone || undefined,
+        is_flamengo: formData.is_flamengo,
+        num_convenio: formData.num_convenio || undefined,
+        alergias: formData.alergias || undefined,
+        grupo_sanguineo: formData.grupo_sanguineo || undefined,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Erro desconhecido ao cadastrar paciente.');
-      }
 
       setSucesso(true);
       setFormData({ nome: '', cpf: '', data_nascimento: '', telefone: '', num_convenio: '', alergias: '', grupo_sanguineo: '', is_flamengo: false });
