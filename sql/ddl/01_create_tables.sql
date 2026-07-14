@@ -2,9 +2,9 @@ CREATE TABLE PESSOA (
     id_pessoa SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     cpf VARCHAR(14) UNIQUE NOT NULL CHECK (cpf ~ '^\d{3}\.\d{3}\.\d{3}-\d{2}$'),
-    data_nascimento DATE NOT NULL,
+    data_nascimento DATE NOT NULL CHECK (data_nascimento >= '1900-01-01' AND data_nascimento <= CURRENT_DATE),
     is_flamengo BOOLEAN NOT NULL,
-    telefone VARCHAR(20)
+    telefone VARCHAR(15) CHECK (telefone ~ '^\(\d{2}\) \d{5}-\d{4}$')
 );
 
 CREATE TABLE PACIENTE (
