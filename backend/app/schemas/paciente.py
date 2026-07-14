@@ -1,15 +1,22 @@
 from datetime import date
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, model_validator, Field, field_validator
 
 
 class PacienteCreate(BaseModel):
     # Dados da Pessoa
     nome: str
-    cpf: str
+    cpf: str = Field(pattern=r'^\d{3}\.\d{3}\.\d{3}-\d{2}$')
     data_nascimento: date
     # aqui é definido um default, não quer dizer que não pode ser mudado
     is_flamengo: bool = False
-    telefone: str | None = None
+    telefone: str | None = Field(default=None, pattern=r'^\(\d{2}\) \d{5}-\d{4}$')
+    
+    @field_validator('data_nascimento')
+    @classmethod
+    def validar_data_nascimento(cls, v: date):
+        if v < date(1900, 1, 1) or v > date.today():
+            raise ValueError('A data de nascimento deve estar entre 01/01/1900 e hoje')
+        return v
     
     # Dados do Paciente
     num_convenio: str | None = None
