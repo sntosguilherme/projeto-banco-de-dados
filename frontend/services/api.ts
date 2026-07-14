@@ -44,7 +44,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-function normalizarAlergiasParaEnvio(alergias?: string | string[]) {
+function normalizarAlergiasParaEnvio(alergias?: string | string[] | null) {
   if (Array.isArray(alergias)) {
     const itens = alergias.map((alergia) => alergia.trim()).filter(Boolean);
     return itens.length > 0 ? itens : undefined;
@@ -216,21 +216,25 @@ export interface AtualizarPacienteOut {
 
 // --- PACIENTES ---
 export function criarPaciente(dados: CriarPacienteInput) {
+  const alergias = normalizarAlergiasParaEnvio(dados.alergias);
+
   return apiFetch<CriarPacienteOut>("/pacientes", {
     method: "POST",
     body: JSON.stringify({
       ...dados,
-      alergias: normalizarAlergiasParaEnvio(dados.alergias),
+      alergias,
     }),
   });
 }
 
 export function atualizarPaciente(idPaciente: number, dados: AtualizarPacienteInput) {
+  const alergias = normalizarAlergiasParaEnvio(dados.alergias);
+
   return apiFetch<AtualizarPacienteOut>(`/pacientes/${idPaciente}`, {
     method: "PATCH",
     body: JSON.stringify({
       ...dados,
-      alergias: normalizarAlergiasParaEnvio(dados.alergias),
+      alergias,
     }),
   });
 }

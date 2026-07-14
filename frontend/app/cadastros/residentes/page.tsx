@@ -2,6 +2,29 @@
 
 import { useState } from 'react';
 import { UserPlus, ShieldAlert, CheckCircle, Save } from 'lucide-react';
+import { criarResidente } from '../../../services/api';
+
+function formatarCpf(valor: string) {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  return digitos
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
+
+function formatarTelefone(valor: string) {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+
+  if (digitos.length <= 2) {
+    return digitos.length ? `(${digitos}` : '';
+  }
+
+  if (digitos.length <= 6) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  }
+
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+}
 
 export default function CadastrarResidentePage() {
   const [formData, setFormData] = useState({
@@ -14,7 +37,19 @@ export default function CadastrarResidentePage() {
   const [sucesso, setSucesso] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === 'cpf') {
+      setFormData({ ...formData, cpf: formatarCpf(value) });
+      return;
+    }
+
+    if (name === 'telefone') {
+      setFormData({ ...formData, telefone: formatarTelefone(value) });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,16 +57,7 @@ export default function CadastrarResidentePage() {
     setLoading(true); setErro(null); setSucesso(false);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/residentes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Erro ao cadastrar residente.');
-      }
+      await criarResidente(formData);
 
       setSucesso(true);
       setFormData({ nome: '', cpf: '', data_nascimento: '', telefone: '', is_flamengo: false, crm: '', especialidade: '', data_admissao: '', ano_residencia: 'R1' });
