@@ -90,7 +90,7 @@ export default function NovoAtendimentoPage() {
       <div className="bg-white rounded-xl border border-neutral-200 p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label htmlFor="data_hora" className="text-sm font-medium text-neutral-600">
                 Data e Hora *
@@ -101,7 +101,8 @@ export default function NovoAtendimentoPage() {
                 name="data_hora"
                 value={formData.data_hora}
                 onChange={handleChange}
-                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors"
+                max="9999-12-31T23:59"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors text-neutral-900 placeholder:text-neutral-400"
                 required
               />
             </div>
@@ -118,7 +119,7 @@ export default function NovoAtendimentoPage() {
                 value={formData.duracao_minutos || ''}
                 onChange={handleChange}
                 placeholder="Ex: 45"
-                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors text-neutral-900 placeholder:text-neutral-400"
                 required
               />
             </div>
@@ -137,7 +138,7 @@ export default function NovoAtendimentoPage() {
                 value={formData.id_paciente || ''}
                 onChange={handleChange}
                 placeholder="Ex: 1"
-                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors text-neutral-900 placeholder:text-neutral-400"
                 required
               />
             </div>
@@ -154,7 +155,7 @@ export default function NovoAtendimentoPage() {
                 value={formData.id_residente || ''}
                 onChange={handleChange}
                 placeholder="Ex: 2"
-                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors text-neutral-900 placeholder:text-neutral-400"
                 required
               />
             </div>
@@ -171,7 +172,7 @@ export default function NovoAtendimentoPage() {
                 value={formData.id_preceptor || ''}
                 onChange={handleChange}
                 placeholder="Ex: 3"
-                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-colors text-neutral-900 placeholder:text-neutral-400"
                 required
               />
             </div>

@@ -7,14 +7,17 @@ import {
   listarProcedimentosDoAtendimento, 
   adicionarProcedimento,
   removerProcedimento,
-  ProcedimentoAtendimento
+  ProcedimentoAtendimentoOut,
+  listarProcedimentos,
+  ProcedimentoBase
 } from '@/services/api';
 
 export default function ProcedimentosPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const atendimentoId = parseInt(id, 10);
 
-  const [procedimentos, setProcedimentos] = useState<ProcedimentoAtendimento[]>([]);
+  const [procedimentos, setProcedimentos] = useState<ProcedimentoAtendimentoOut[]>([]);
+  const [catalogo, setCatalogo] = useState<ProcedimentoBase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,17 +30,21 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const carregarProcedimentos = async () => {
+  const carregarDados = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await listarProcedimentosDoAtendimento(atendimentoId);
-      setProcedimentos(data);
+      const [dataProcedimentos, dataCatalogo] = await Promise.all([
+        listarProcedimentosDoAtendimento(atendimentoId),
+        listarProcedimentos()
+      ]);
+      setProcedimentos(dataProcedimentos);
+      setCatalogo(dataCatalogo);
     } catch (err: any) {
       if (err.message?.includes('404')) {
         setError('Atendimento não encontrado. Verifique se o ID está correto.');
       } else {
-        setError(err.message || 'Erro ao carregar os procedimentos.');
+        setError(err.message || 'Erro ao carregar os dados.');
       }
     } finally {
       setLoading(false);
@@ -45,10 +52,10 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
   };
 
   useEffect(() => {
-    carregarProcedimentos();
+    carregarDados();
   }, [atendimentoId]);
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -61,7 +68,15 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
     setFormError(null);
 
     if (!formData.id_procedimento) {
-      setFormError('Informe o ID do procedimento.');
+      setFormError('Informe o procedimento.');
+      return;
+    }
+    if (formData.quantidade <= 0) {
+      setFormError('A quantidade deve ser maior que zero.');
+      return;
+    }
+    if (formData.tempo_real_minutos <= 0) {
+      setFormError('O tempo do procedimento deve ser maior que zero.');
       return;
     }
 
@@ -80,13 +95,15 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
         tempo_real_minutos: 0,
         observacao: ''
       });
-      await carregarProcedimentos();
+      await carregarDados();
     } catch (err: any) {
       const msg = err.message?.toLowerCase() || '';
       if (msg.includes('409') || msg.includes('already') || msg.includes('já cadastrado')) {
         setFormError('Este procedimento já está registrado neste atendimento.');
       } else if (msg.includes('404')) {
         setFormError('Procedimento não encontrado. Verifique o ID do procedimento.');
+      } else if (msg.includes('violates check constraint') || msg.includes('tempo_real_minutos')) {
+        setFormError('O tempo e a quantidade do procedimento devem ser maiores que zero.');
       } else {
         setFormError(err.message || 'Erro ao adicionar o procedimento.');
       }
@@ -100,7 +117,7 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
     
     try {
       await removerProcedimento(atendimentoId, idProcedimento);
-      await carregarProcedimentos();
+      await carregarDados();
     } catch (err: any) {
       alert(err.message || 'Erro ao remover procedimento');
     }
@@ -136,11 +153,11 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
         {/* Formulário de Adicionar */}
         <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-xl border border-neutral-200 sticky top-24">
+          <div className="bg-white p-6 rounded-xl border border-neutral-200 h-full flex flex-col">
             <h2 className="text-base font-bold text-neutral-800 mb-6 flex items-center gap-2">
               <Plus className="w-4 h-4 text-neutral-500" />
               Novo Procedimento
@@ -152,18 +169,23 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
               </div>
             )}
 
-            <form onSubmit={handleAddProcedimento} className="space-y-4">
+            <form onSubmit={handleAddProcedimento} className="space-y-4 flex-grow flex flex-col">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-600">ID do Procedimento *</label>
-                <input
-                  type="number"
+                <label className="text-sm font-medium text-neutral-600">Procedimento *</label>
+                <select
                   name="id_procedimento"
                   value={formData.id_procedimento}
                   onChange={handleFormChange}
-                  placeholder="Ex: 102"
-                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all text-sm bg-white text-neutral-900"
                   required
-                />
+                >
+                  <option value="" disabled>Selecione um procedimento</option>
+                  {catalogo.map(proc => (
+                    <option key={proc.id_procedimento} value={proc.id_procedimento}>
+                      {proc.nome} (Risco: {proc.nivel_risco})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -175,7 +197,7 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
                     min="1"
                     value={formData.quantidade}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all text-sm"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all text-sm text-neutral-900"
                     required
                   />
                 </div>
@@ -187,27 +209,27 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
                     min="0"
                     value={formData.tempo_real_minutos}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all text-sm"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all text-sm text-neutral-900"
                     required
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 flex-grow">
                 <label className="text-sm font-medium text-neutral-600">Observação</label>
                 <textarea
                   name="observacao"
                   value={formData.observacao}
                   onChange={handleFormChange}
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all resize-none text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all resize-none text-sm text-neutral-900 h-[calc(100%-24px)] min-h-[80px]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full py-2.5 rounded-lg text-sm font-medium text-white transition-all mt-2 ${
+                className={`w-full py-2.5 rounded-lg text-sm font-medium text-white transition-all mt-4 ${
                   isSubmitting 
                     ? 'bg-neutral-500 cursor-not-allowed' 
                     : 'bg-neutral-900 hover:bg-neutral-800'
@@ -221,7 +243,7 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
 
         {/* Lista de Procedimentos */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden min-h-[400px]">
+          <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden h-full">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>

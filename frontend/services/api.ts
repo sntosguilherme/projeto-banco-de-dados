@@ -79,6 +79,15 @@ export interface ProcedimentoAtendimentoOut {
   nome_procedimento: string;
   quantidade: number;
   tempo_real_minutos: number;
+  observacao?: string;
+}
+
+export interface ProcedimentoBase {
+  id_procedimento: number;
+  codigo: string;
+  nome: string;
+  tempo_medio_minutos: number;
+  nivel_risco: string;
 }
 
 export interface AdicionarProcedimentoInput {
@@ -210,9 +219,14 @@ export function adicionarProcedimento(idAtendimento: number, dados: AdicionarPro
 }
 
 export function removerProcedimento(idAtendimento: number, idProcedimento: number) {
-  return apiFetch<{ sucesso: boolean }>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
+  return apiFetch<any>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
     method: "DELETE",
   });
+}
+
+// --- CATÁLOGO DE PROCEDIMENTOS ---
+export function listarProcedimentos() {
+  return apiFetch<ProcedimentoBase[]>('/procedimentos');
 }
 
 // --- RELATÓRIOS / CONSULTAS ANALÍTICAS ---

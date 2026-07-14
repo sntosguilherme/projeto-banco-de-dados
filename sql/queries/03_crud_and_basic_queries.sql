@@ -29,7 +29,8 @@ SELECT
     pr.id_procedimento,
     p.nome AS nome_procedimento,
     pr.quantidade,
-    pr.tempo_real_minutos
+    pr.tempo_real_minutos,
+    pr.observacao
 FROM PROCEDIMENTO_REALIZADO pr
 JOIN PROCEDIMENTO p ON pr.id_procedimento = p.id_procedimento
 WHERE pr.id_atendimento = %s;
@@ -166,3 +167,10 @@ JOIN PESSOA p ON a.id_paciente = p.id_pessoa
 JOIN PESSOA r ON a.id_residente = r.id_pessoa
 JOIN PESSOA pr ON a.id_preceptor = pr.id_pessoa
 ORDER BY a.data_hora DESC;
+
+-- listar_todos_procedimentos
+-- Listar todos os procedimentos disponíveis no catálogo
+-- Mapeamento CRUD: READ / Rota API: GET /procedimentos
+SELECT id_procedimento, codigo, nome, tempo_medio_minutos, nivel_risco 
+FROM PROCEDIMENTO 
+ORDER BY nome ASC;

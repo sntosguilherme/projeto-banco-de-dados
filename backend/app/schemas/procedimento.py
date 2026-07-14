@@ -1,7 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional
 
-
+# GET /procedimentos
+class ProcedimentoOut(BaseModel):
+    id_procedimento: int
+    codigo: str
+    nome: str
+    tempo_medio_minutos: int
+    nivel_risco: str
 # GET /atendimentos/{id_atendimento}/procedimentos
 class ProcedimentoRealizadoOut(BaseModel):
     # Retorna os procedimentos realizados em um atendimento específico.
@@ -9,6 +15,7 @@ class ProcedimentoRealizadoOut(BaseModel):
     nome_procedimento: str
     quantidade: int
     tempo_real_minutos: int
+    observacao: Optional[str] = None
 
 
 
