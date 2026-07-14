@@ -94,7 +94,7 @@ const metricasFiltradas = metricas.filter(item =>
       {loading && (
         <div className="flex flex-col items-center justify-center p-12 text-center border border-neutral-200 rounded-xl bg-neutral-50/50">
           <RefreshCw className="h-8 w-8 text-neutral-400 animate-spin mb-3" />
-          <p className="text-sm font-medium text-neutral-600">Calculando médias de tempo cirúrgico e clínico...</p>
+          <p className="text-sm font-medium text-neutral-600">Calculando tempo médio de atendimento por residente...</p>
         </div>
       )}
 
