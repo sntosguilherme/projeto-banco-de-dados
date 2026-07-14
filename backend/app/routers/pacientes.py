@@ -13,6 +13,32 @@ from app.schemas.atendimento import AtendimentoOut
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
 ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
 
+
+def salvar_alergias(cursor, id_pessoa: int, alergias: str | None) -> None:
+    if not alergias:
+        return
+
+    alergias_normalizadas = [alergia.strip() for alergia in alergias.split(",") if alergia.strip()]
+    for alergia in alergias_normalizadas:
+        cursor.execute(
+            """
+            INSERT INTO ALERGIA (nome)
+            VALUES (%s)
+            ON CONFLICT (nome) DO UPDATE SET nome = EXCLUDED.nome
+            RETURNING id_alergia;
+            """,
+            (alergia,)
+        )
+        id_alergia = cursor.fetchone()["id_alergia"]
+        cursor.execute(
+            """
+            INSERT INTO PACIENTE_ALERGIA (id_pessoa, id_alergia)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING;
+            """,
+            (id_pessoa, id_alergia)
+        )
+
 @router.post("", response_model=PacienteCreateOut, status_code=201)
 # o response model ele formata a saida final usando o schemas definido para isso
 # o 201 é o codigo de status HTTP que significa criado
@@ -43,9 +69,10 @@ def criar_paciente(paciente: PacienteCreate):
                     cursor.execute(sql_paciente, (
                         id_pessoa,
                         paciente.num_convenio,
-                        paciente.alergias,
                         paciente.grupo_sanguineo
                     ))
+
+                    salvar_alergias(cursor, id_pessoa, paciente.alergias)
                     
         return PacienteCreateOut(id_pessoa=id_pessoa)
         
@@ -91,8 +118,11 @@ def atualizar_paciente(id_paciente: int, dados: PacienteUpdate):
                         cursor.execute(sql, (dados.num_convenio, id_paciente))
     
                     if dados.alergias is not None:
-                        sql = load_query(ARQUIVO_SQL, "atualizar_paciente_alergias")
-                        cursor.execute(sql, (dados.alergias, id_paciente))
+                        cursor.execute(
+                            "DELETE FROM PACIENTE_ALERGIA WHERE id_pessoa = %s",
+                            (id_paciente,)
+                        )
+                        salvar_alergias(cursor, id_paciente, dados.alergias)
 
         return PacienteUpdateOut(id_pessoa=id_paciente)
 

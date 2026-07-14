@@ -7,6 +7,7 @@
 -- QUANTIDADE DE CADA ENTIDADE: 
 -- 5 residentes, 5 preceptores, 10 pacientes, 5 unidades, 12 procedimentos, 17 atendimentos,
 -- 23 procedimentos realizados, 20 escalas (distribuídas em 5 unidades, 4 dias da semana, 4 turnos)
+-- 6 alergias, 7 pacientes com alergias (alguns com mais de uma alergia).
 
 -- PESSOA
 INSERT INTO PESSOA (nome, cpf, data_nascimento, is_flamengo, telefone) VALUES
@@ -60,17 +61,36 @@ INSERT INTO PRECEPTOR (id_profissional, titulacao) VALUES
 (9,  'Doutor'), -- Mark
 (10, 'Mestre'); -- Yuri Cavalcante
 -- PACIENTE
-INSERT INTO PACIENTE (id_pessoa, num_convenio, alergias, grupo_sanguineo) VALUES
-(11, 'UNIMED-1',    'Dipirona',                          'O+'),
-(12, 'BRADESCO-1',   NULL,                               'A+'),
-(13, NULL,          'Penicilina, Látex',                 'B-'),
-(14, 'AMIL-1',       NULL,                               'AB+'),
-(15, 'UNIMED-2',     NULL,                               'O-'),
-(16, NULL,          'Ser feio',                          'A-'), 
-(17, 'SULAMERICA-1', NULL,                               'B+'),
-(18, 'BRADESCO-2',  'Amoxicilina',                       'O+'),
-(19, NULL,          'Segunda-Feira',                     'A+'),
-(20, 'AMIL-1',      'Segunda-Feira',                     'AB-');
+INSERT INTO PACIENTE (id_pessoa, num_convenio, grupo_sanguineo) VALUES
+(11, 'UNIMED-1',    'O+'),
+(12, 'BRADESCO-1',  'A+'),
+(13, NULL,          'B-'),
+(14, 'AMIL-1',      'AB+'),
+(15, 'UNIMED-2',    'O-'),
+(16, NULL,          'A-'),
+(17, 'SULAMERICA-1','B+'),
+(18, 'BRADESCO-2',  'O+'),
+(19, NULL,          'A+'),
+(20, 'AMIL-1',      'AB-');
+
+-- ALERGIA
+INSERT INTO ALERGIA (nome) VALUES
+('Dipirona'),
+('Penicilina'),
+('Látex'),
+('Ser feio'),
+('Amoxicilina'),
+('Segunda-Feira');
+
+-- PACIENTE_ALERGIA
+INSERT INTO PACIENTE_ALERGIA (id_pessoa, id_alergia) VALUES
+(11, 1),
+(13, 2),
+(13, 3),
+(16, 4),
+(18, 5),
+(19, 6),
+(20, 6);
 
 
 -- UNIDADE
