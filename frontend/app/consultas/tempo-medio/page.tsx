@@ -36,7 +36,6 @@ export default function TempoMedioAtendimentoPage() {
     carregarMetricas();
   }, []);
 
-  // Filtro inteligente por nome ou especialidade
 const metricasFiltradas = metricas.filter(item =>
   item.nome_residente?.toLowerCase().includes(filtro.toLowerCase()) 
 );
@@ -64,7 +63,7 @@ const metricasFiltradas = metricas.filter(item =>
             <Clock className="h-6 w-6 text-neutral-500 hidden sm:block" />
           </div>
           <p className="text-sm text-neutral-500">
-            Análise de performance e tempo de atendimento por médico residente agrupado por especialidade médica.
+            Análise de performance e tempo de atendimento por médico residente.
           </p>
         </div>
         <button
@@ -83,7 +82,7 @@ const metricasFiltradas = metricas.filter(item =>
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
           <input
             type="text"
-            placeholder="Filtrar por residente ou especialidade..."
+            placeholder="Filtrar por residente"
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-neutral-200 rounded-lg text-sm bg-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-800 transition"
@@ -127,7 +126,6 @@ const metricasFiltradas = metricas.filter(item =>
                 <thead className="bg-neutral-50 text-xs font-semibold text-neutral-700 uppercase tracking-wider border-b border-neutral-200">
                   <tr>
                     <th scope="col" className="px-6 py-4">Residente</th>
-                    <th scope="col" className="px-6 py-4">Especialidade</th>
                     <th scope="col" className="px-6 py-4 w-32 text-center">Ano Residência</th>
                     <th scope="col" className="px-6 py-4 w-44 text-right">Tempo Médio</th>
                   </tr>
