@@ -5,6 +5,7 @@ from typing import Optional
 # GET /atendimentos/{id_atendimento}/procedimentos
 class ProcedimentoRealizadoOut(BaseModel):
     # Retorna os procedimentos realizados em um atendimento específico.
+    id_procedimento: int
     nome_procedimento: str
     quantidade: int
     tempo_real_minutos: int

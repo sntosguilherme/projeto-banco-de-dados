@@ -26,6 +26,7 @@ ORDER BY a.data_hora DESC;
 -- Listar os procedimentos realizados em um atendimento
 -- Mapeamento CRUD: READ / Rota API: GET /atendimentos/{id_atendimento}/procedimentos
 SELECT 
+    pr.id_procedimento,
     p.nome AS nome_procedimento,
     pr.quantidade,
     pr.tempo_real_minutos
