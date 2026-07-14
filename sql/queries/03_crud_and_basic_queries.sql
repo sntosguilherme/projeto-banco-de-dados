@@ -26,9 +26,11 @@ ORDER BY a.data_hora DESC;
 -- Listar os procedimentos realizados em um atendimento
 -- Mapeamento CRUD: READ / Rota API: GET /atendimentos/{id_atendimento}/procedimentos
 SELECT 
+    pr.id_procedimento,
     p.nome AS nome_procedimento,
     pr.quantidade,
-    pr.tempo_real_minutos
+    pr.tempo_real_minutos,
+    pr.observacao
 FROM PROCEDIMENTO_REALIZADO pr
 JOIN PROCEDIMENTO p ON pr.id_procedimento = p.id_procedimento
 WHERE pr.id_atendimento = %s;
@@ -134,9 +136,8 @@ LEFT JOIN PRECEPTOR prec ON prof.id_pessoa = prec.id_profissional
 ORDER BY pes.nome ASC;
 
 -- verificar_atendimento_existe
--- Verificar se o atendimento especificado existe
--- Mapeamento CRUD: READ
-SELECT 1 FROM ATENDIMENTO WHERE id_atendimento = %s;
+-- Mapeamento CRUD: READ / Uso: Validar se um atendimento existe antes de realizar ações dependentes
+SELECT id_atendimento, duracao_minutos FROM ATENDIMENTO WHERE id_atendimento = %s;
 
 -- verificar_procedimento_existe
 -- Verificar se o procedimento especificado existe
@@ -165,3 +166,23 @@ JOIN PESSOA p ON a.id_paciente = p.id_pessoa
 JOIN PESSOA r ON a.id_residente = r.id_pessoa
 JOIN PESSOA pr ON a.id_preceptor = pr.id_pessoa
 ORDER BY a.data_hora DESC;
+
+-- listar_todos_procedimentos
+-- Listar todos os procedimentos disponíveis no catálogo
+-- Mapeamento CRUD: READ / Rota API: GET /procedimentos
+SELECT id_procedimento, codigo, nome, tempo_medio_minutos, nivel_risco 
+FROM PROCEDIMENTO 
+ORDER BY nome ASC;
+
+-- recalcular_duracao_atendimento
+-- Mapeamento CRUD: UPDATE / Uso: Ao adicionar ou remover um procedimento
+UPDATE ATENDIMENTO 
+SET duracao_minutos = (
+    SELECT COALESCE(SUM(tempo_real_minutos), 0) 
+    FROM PROCEDIMENTO_REALIZADO 
+    WHERE id_atendimento = %s
+)
+WHERE id_atendimento = %s;
+
+-- obter_tempo_procedimento
+SELECT tempo_real_minutos FROM PROCEDIMENTO_REALIZADO WHERE id_atendimento = %s AND id_procedimento = %s;

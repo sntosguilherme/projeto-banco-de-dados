@@ -61,13 +61,36 @@ export interface Atendimento {
   id_atendimento: number;
   data_hora: string;
   duracao_minutos: number;
+  nome_paciente: string;
+  nome_residente: string;
+  nome_preceptor: string;
+}
+
+export interface CriarAtendimentoInput {
+  data_hora: string;
+  duracao_minutos: number;
   id_paciente: number;
   id_residente: number;
   id_preceptor: number;
 }
-export type CriarAtendimentoInput = Omit<Atendimento, 'id_atendimento'>;
 
-export interface ProcedimentoAtendimento {
+export interface ProcedimentoAtendimentoOut {
+  id_procedimento: number;
+  nome_procedimento: string;
+  quantidade: number;
+  tempo_real_minutos: number;
+  observacao?: string;
+}
+
+export interface ProcedimentoBase {
+  id_procedimento: number;
+  codigo: string;
+  nome: string;
+  tempo_medio_minutos: number;
+  nivel_risco: string;
+}
+
+export interface AdicionarProcedimentoInput {
   id_procedimento: number;
   quantidade: number;
   tempo_real_minutos: number;
@@ -185,20 +208,25 @@ export function listarHistoricoAtendimentos() {
 
 // --- PROCEDIMENTOS DO ATENDIMENTO ---
 export function listarProcedimentosDoAtendimento(idAtendimento: number) {
-  return apiFetch<ProcedimentoAtendimento[]>(`/atendimentos/${idAtendimento}/procedimentos`);
+  return apiFetch<ProcedimentoAtendimentoOut[]>(`/atendimentos/${idAtendimento}/procedimentos`);
 }
 
-export function adicionarProcedimento(idAtendimento: number, dados: ProcedimentoAtendimento) {
-  return apiFetch<ProcedimentoAtendimento>(`/atendimentos/${idAtendimento}/procedimentos`, {
+export function adicionarProcedimento(idAtendimento: number, dados: AdicionarProcedimentoInput) {
+  return apiFetch<any>(`/atendimentos/${idAtendimento}/procedimentos`, {
     method: "POST",
     body: JSON.stringify(dados),
   });
 }
 
 export function removerProcedimento(idAtendimento: number, idProcedimento: number) {
-  return apiFetch<{ sucesso: boolean }>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
+  return apiFetch<any>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
     method: "DELETE",
   });
+}
+
+// --- CATÁLOGO DE PROCEDIMENTOS ---
+export function listarProcedimentos() {
+  return apiFetch<ProcedimentoBase[]>('/procedimentos');
 }
 
 // --- RELATÓRIOS / CONSULTAS ANALÍTICAS ---
