@@ -157,11 +157,16 @@ export default function ListarPacientesPage() {
                     onClick={() => abrirModal(paciente)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-neutral-100 text-neutral-700 p-1.5 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-neutral-100 text-neutral-700 p-2 rounded-md">
                           <User className="h-4 w-4" />
                         </div>
-                        <span className="font-medium text-neutral-900">{paciente.nome}</span>
+                        <div>
+                          <span className="font-medium text-neutral-900 block">{paciente.nome}</span>
+                          <span className="text-[11px] font-mono font-medium text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                            ID: {paciente.id_pessoa}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap font-mono text-neutral-500">
