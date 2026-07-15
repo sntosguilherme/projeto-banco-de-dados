@@ -16,6 +16,7 @@ class ProcedimentoRealizadoOut(BaseModel):
     quantidade: int
     tempo_real_minutos: int
     observacao: Optional[str] = None
+    faturado: bool
 
 
 
