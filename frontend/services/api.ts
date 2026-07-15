@@ -12,10 +12,53 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const erro = await res.json().catch(() => null);
-    throw new Error(erro?.detail || `Erro na requisição (${res.status})`);
+    const detalhe = erro?.detail;
+
+    if (Array.isArray(detalhe)) {
+      const mensagem = detalhe
+        .map((item) => {
+          if (typeof item === "string") {
+            return item;
+          }
+
+          if (item && typeof item === "object") {
+            const localizacao = Array.isArray(item.loc) ? item.loc.join(".") : "campo";
+            const mensagemItem = item.msg || JSON.stringify(item);
+            return `${localizacao}: ${mensagemItem}`;
+          }
+
+          return String(item);
+        })
+        .join("; ");
+
+      throw new Error(mensagem || `Erro na requisição (${res.status})`);
+    }
+
+    if (typeof detalhe === "object" && detalhe !== null) {
+      throw new Error((detalhe as { msg?: string }).msg || JSON.stringify(detalhe));
+    }
+
+    throw new Error(detalhe || `Erro na requisição (${res.status})`);
   }
 
   return res.json();
+}
+
+function normalizarAlergiasParaEnvio(alergias?: string | string[] | null) {
+  if (Array.isArray(alergias)) {
+    const itens = alergias.map((alergia) => alergia.trim()).filter(Boolean);
+    return itens.length > 0 ? itens : undefined;
+  }
+
+  const valor = alergias?.trim();
+  if (!valor) {
+    return undefined;
+  }
+
+  return valor
+    .split(",")
+    .map((alergia) => alergia.trim())
+    .filter(Boolean);
 }
 
 // =====================================================================
@@ -36,8 +79,15 @@ export interface Paciente extends Pessoa {
   alergias?: string;
   grupo_sanguineo?: string;
 }
-export type CriarPacienteInput = Omit<Paciente, 'id_paciente'>;
-export type AtualizarPacienteInput = Pick<Paciente, 'num_convenio' | 'alergias'>;
+export type CriarPacienteInput = Pessoa & {
+  num_convenio?: string;
+  alergias?: string | string[];
+  grupo_sanguineo?: string;
+};
+export type AtualizarPacienteInput = {
+  num_convenio?: string;
+  alergias?: string | string[];
+};
 
 export interface Profissional extends Pessoa {
   crm: string;
@@ -148,22 +198,44 @@ export interface PacienteSemRisco {
   alergias?: string;
 }
 
+export interface CriarPacienteOut {
+  id_pessoa: number;
+  id_paciente?: number;
+  detail?: string;
+}
+
+export interface AtualizarPacienteOut {
+  id_pessoa: number;
+  id_paciente?: number;
+  detail?: string;
+}
+
 // =====================================================================
 // 4. MÉTODOS DE CHAMADA DA API (ROTAS)
 // =====================================================================
 
 // --- PACIENTES ---
 export function criarPaciente(dados: CriarPacienteInput) {
-  return apiFetch<{ id_paciente: number }>("/pacientes", {
+  const alergias = normalizarAlergiasParaEnvio(dados.alergias);
+
+  return apiFetch<CriarPacienteOut>("/pacientes", {
     method: "POST",
-    body: JSON.stringify(dados),
+    body: JSON.stringify({
+      ...dados,
+      alergias,
+    }),
   });
 }
 
 export function atualizarPaciente(idPaciente: number, dados: AtualizarPacienteInput) {
-  return apiFetch<Paciente>(`/pacientes/${idPaciente}`, {
+  const alergias = normalizarAlergiasParaEnvio(dados.alergias);
+
+  return apiFetch<AtualizarPacienteOut>(`/pacientes/${idPaciente}`, {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: JSON.stringify({
+      ...dados,
+      alergias,
+    }),
   });
 }
 

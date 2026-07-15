@@ -2,6 +2,29 @@
 
 import { useState } from 'react';
 import { UserPlus, ShieldAlert, CheckCircle, Save } from 'lucide-react';
+import { criarPaciente } from '../../../services/api';
+
+function formatarCpf(valor: string) {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  return digitos
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
+
+function formatarTelefone(valor: string) {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+
+  if (digitos.length <= 2) {
+    return digitos.length ? `(${digitos}` : '';
+  }
+
+  if (digitos.length <= 6) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  }
+
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+}
 
 export default function CadastrarPacientePage() {
   const [formData, setFormData] = useState({
@@ -19,8 +42,20 @@ export default function CadastrarPacientePage() {
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+
+    if (name === 'cpf') {
+      setFormData({ ...formData, cpf: formatarCpf(value) });
+      return;
+    }
+
+    if (name === 'telefone') {
+      setFormData({ ...formData, telefone: formatarTelefone(value) });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,21 +65,16 @@ export default function CadastrarPacientePage() {
     setSucesso(false);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/pacientes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          num_convenio: formData.num_convenio || null,
-          alergias: formData.alergias || null,
-          grupo_sanguineo: formData.grupo_sanguineo || null,
-        }),
+      await criarPaciente({
+        nome: formData.nome,
+        cpf: formData.cpf,
+        data_nascimento: formData.data_nascimento,
+        telefone: formData.telefone || undefined,
+        is_flamengo: formData.is_flamengo,
+        num_convenio: formData.num_convenio || undefined,
+        alergias: formData.alergias || undefined,
+        grupo_sanguineo: formData.grupo_sanguineo || undefined,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Erro desconhecido ao cadastrar paciente.');
-      }
 
       setSucesso(true);
       setFormData({ nome: '', cpf: '', data_nascimento: '', telefone: '', num_convenio: '', alergias: '', grupo_sanguineo: '', is_flamengo: false });
@@ -137,9 +167,22 @@ export default function CadastrarPacientePage() {
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-neutral-700">Grupo Sanguíneo</label>
-            <input type="text" name="grupo_sanguineo" value={formData.grupo_sanguineo} onChange={handleChange} maxLength={3} placeholder="Ex: O+" 
-              className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-800 transition" 
-            />
+            <select
+              name="grupo_sanguineo"
+              value={formData.grupo_sanguineo}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-800 transition"
+            >
+              <option value="">Selecione</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
           </div>
           <div className="space-y-1 md:col-span-3">
             <label className="text-sm font-medium text-neutral-700">Alergias</label>

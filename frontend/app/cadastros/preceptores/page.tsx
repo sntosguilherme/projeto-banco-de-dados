@@ -3,6 +3,28 @@
 import { useState } from 'react';
 import { UserPlus, ShieldAlert, CheckCircle, Save } from 'lucide-react';
 
+function formatarCpf(valor: string) {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  return digitos
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
+
+function formatarTelefone(valor: string) {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+
+  if (digitos.length <= 2) {
+    return digitos.length ? `(${digitos}` : '';
+  }
+
+  if (digitos.length <= 6) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  }
+
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+}
+
 export default function CadastrarPreceptorPage() {
   const [formData, setFormData] = useState({
     nome: '', cpf: '', data_nascimento: '', telefone: '', is_flamengo: false,
@@ -14,7 +36,19 @@ export default function CadastrarPreceptorPage() {
   const [sucesso, setSucesso] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === 'cpf') {
+      setFormData({ ...formData, cpf: formatarCpf(value) });
+      return;
+    }
+
+    if (name === 'telefone') {
+      setFormData({ ...formData, telefone: formatarTelefone(value) });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

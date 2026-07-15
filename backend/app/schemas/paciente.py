@@ -20,7 +20,7 @@ class PacienteCreate(BaseModel):
 
     # Dados do Paciente
     num_convenio: str | None = None
-    alergias: list[str] = []
+    alergias: list[str] = Field(default_factory=list)
     grupo_sanguineo: str | None = Field(default=None, max_length=3)
 
 

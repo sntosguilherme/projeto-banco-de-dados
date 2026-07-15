@@ -13,31 +13,21 @@ from app.schemas.atendimento import AtendimentoOut
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
 ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
 
-
-def salvar_alergias(cursor, id_pessoa: int, alergias: str | None) -> None:
-    if not alergias:
+# Função auxiliar para salvar alergias de um paciente.
+def salvar_alergias(cursor, id_pessoa: int, alergias: list[str] | str | None) -> None:
+    if alergias is None:
         return
 
-    alergias_normalizadas = [alergia.strip() for alergia in alergias.split(",") if alergia.strip()]
-    for alergia in alergias_normalizadas:
-        cursor.execute(
-            """
-            INSERT INTO ALERGIA (nome)
-            VALUES (%s)
-            ON CONFLICT (nome) DO UPDATE SET nome = EXCLUDED.nome
-            RETURNING id_alergia;
-            """,
-            (alergia,)
-        )
+    if isinstance(alergias, str):
+        alergias = [item.strip() for item in alergias.split(",") if item.strip()]
+
+    for alergia in alergias:
+        alergia = alergia.strip()
+        if not alergia:
+            continue
+        cursor.execute(load_query(ARQUIVO_SQL, "inserir_alergia"), (alergia,))
         id_alergia = cursor.fetchone()["id_alergia"]
-        cursor.execute(
-            """
-            INSERT INTO PACIENTE_ALERGIA (id_pessoa, id_alergia)
-            VALUES (%s, %s)
-            ON CONFLICT DO NOTHING;
-            """,
-            (id_pessoa, id_alergia)
-        )
+        cursor.execute(load_query(ARQUIVO_SQL, "inserir_paciente_alergia"), (id_pessoa, id_alergia))
 
 @router.post("", response_model=PacienteCreateOut, status_code=201)
 # o response model ele formata a saida final usando o schemas definido para isso
@@ -119,7 +109,7 @@ def atualizar_paciente(id_paciente: int, dados: PacienteUpdate):
     
                     if dados.alergias is not None:
                         cursor.execute(
-                            "DELETE FROM PACIENTE_ALERGIA WHERE id_pessoa = %s",
+                            load_query(ARQUIVO_SQL, "remover_alergias_paciente"),
                             (id_paciente,)
                         )
                         salvar_alergias(cursor, id_paciente, dados.alergias)
