@@ -55,6 +55,11 @@ export default function CadastrarPacientePage() {
       return;
     }
 
+    if (name === 'nome') {
+      setFormData({ ...formData, nome: value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '') });
+      return;
+    }
+
     setFormData({ ...formData, [name]: value });
   };
 
@@ -146,7 +151,7 @@ export default function CadastrarPacientePage() {
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-neutral-700">Data de Nascimento *</label>
-            <input required type="date" name="data_nascimento" value={formData.data_nascimento} onChange={handleChange} 
+            <input required type="date" name="data_nascimento" value={formData.data_nascimento} onChange={handleChange} max="9999-12-31"
               className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-800 transition" 
             />
           </div>

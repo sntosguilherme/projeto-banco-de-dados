@@ -85,7 +85,8 @@ SELECT
     p.nome AS nome_procedimento,
     pr.quantidade,
     pr.tempo_real_minutos,
-    pr.observacao
+    pr.observacao,
+    pr.faturado
 FROM PROCEDIMENTO_REALIZADO pr
 JOIN PROCEDIMENTO p ON pr.id_procedimento = p.id_procedimento
 WHERE pr.id_atendimento = %s;
