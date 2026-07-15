@@ -45,7 +45,7 @@ CREATE TABLE UNIDADE (
     id_unidade SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     tipo VARCHAR(50) NOT NULL,
-    capacidade_leitos INT NOT NULL
+    capacidade_leitos INT NOT NULL CHECK (capacidade_leitos >= 0)
 );
 
 CREATE TABLE ATENDIMENTO (
