@@ -153,6 +153,7 @@ export interface ProcedimentoAtendimentoOut {
   quantidade: number;
   tempo_real_minutos: number;
   observacao?: string;
+  faturado: boolean;
 }
 
 export interface ProcedimentoBase {

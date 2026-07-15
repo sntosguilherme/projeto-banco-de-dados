@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { Plus, Activity, AlertCircle, FileText, Trash2 } from 'lucide-react';
+import { Plus, Activity, AlertCircle, FileText, Trash2, CircleCheckBig, CircleDashed } from 'lucide-react';
 import { 
   listarProcedimentosDoAtendimento, 
   adicionarProcedimento,
@@ -127,6 +127,22 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
     } catch (err: any) {
       alert(err.message || 'Erro ao remover procedimento');
     }
+  };
+
+  const getStatusVisual = (faturado: boolean) => {
+    if (faturado) {
+      return {
+        label: 'Faturado',
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        icon: CircleCheckBig,
+      };
+    }
+
+    return {
+      label: 'Não faturado',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
+      icon: CircleDashed,
+    };
   };
 
   if (error) {
@@ -257,35 +273,37 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
                     <th className="p-4 pl-6 text-xs font-bold text-neutral-500 uppercase tracking-wider">Procedimento</th>
                     <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Qtd</th>
                     <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Tempo</th>
+                    <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Faturamento</th>
                     <th className="p-4 pr-6 text-right text-xs font-bold text-neutral-500 uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-200 text-sm text-neutral-700">
                   {loading ? (
                     <tr key="loading">
-                      <td colSpan={4} className="p-8 text-center text-neutral-500">
+                      <td colSpan={5} className="p-8 text-center text-neutral-500">
                         Carregando procedimentos...
                       </td>
                     </tr>
                   ) : procedimentos.length === 0 ? (
                     <tr key="empty">
-                      <td colSpan={4} className="p-12 text-center text-neutral-500">
+                      <td colSpan={5} className="p-12 text-center text-neutral-500">
                         Nenhum procedimento registrado neste atendimento.
                       </td>
                     </tr>
                   ) : (
                     procedimentos.map((proc) => (
-                      <tr key={proc.id_procedimento} className="hover:bg-neutral-50 transition-colors">
+                      <tr
+                        key={proc.id_procedimento}
+                        className={`transition-colors ${proc.faturado ? 'bg-emerald-50/40 hover:bg-emerald-50' : 'hover:bg-neutral-50'}`}
+                      >
                         <td className="p-4 pl-6">
                           <div className="flex flex-col">
                             <span className="font-medium text-neutral-800">
                               {proc.nome_procedimento} <span className="text-neutral-400 font-normal text-xs">(ID {proc.id_procedimento})</span>
                             </span>
-                            {/* @ts-ignore */}
                             {proc.observacao && (
                               <span className="text-xs text-neutral-500 mt-1 italic flex items-center gap-1">
                                 <FileText className="w-3 h-3" />
-                                {/* @ts-ignore */}
                                 {proc.observacao}
                               </span>
                             )}
@@ -297,10 +315,21 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
                         <td className="p-4">
                           {proc.tempo_real_minutos} min
                         </td>
+                        <td className="p-4">
+                          <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusVisual(proc.faturado).className}`}>
+                            {proc.faturado ? <CircleCheckBig className="w-3.5 h-3.5" /> : <CircleDashed className="w-3.5 h-3.5" />}
+                            {proc.faturado ? 'Faturado' : 'Não faturado'}
+                          </span>
+                        </td>
                         <td className="p-4 pr-6 text-right">
                           <button
                             onClick={() => handleRemoveProcedimento(proc.id_procedimento)}
-                            className="text-neutral-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex"
+                            disabled={proc.faturado}
+                            className={`p-1.5 rounded-lg transition-colors inline-flex ${
+                              proc.faturado
+                                ? 'text-neutral-300 cursor-not-allowed'
+                                : 'text-neutral-400 hover:text-red-600 hover:bg-red-50'
+                            }`}
                             title="Remover procedimento"
                           >
                             <Trash2 className="w-4 h-4" />
