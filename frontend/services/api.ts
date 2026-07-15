@@ -22,14 +22,33 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
           }
 
           if (item && typeof item === "object") {
-            const localizacao = Array.isArray(item.loc) ? item.loc.join(".") : "campo";
-            const mensagemItem = item.msg || JSON.stringify(item);
-            return `${localizacao}: ${mensagemItem}`;
+            let campo = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : "campo";
+            
+            if (typeof campo === 'string') {
+              if (campo === 'cpf') campo = 'CPF';
+              else if (campo === 'crm') campo = 'CRM';
+              else {
+                campo = campo.replace(/_/g, ' ');
+                campo = campo.charAt(0).toUpperCase() + campo.slice(1);
+              }
+            }
+
+            let mensagemItem = item.msg || JSON.stringify(item);
+            
+            if (mensagemItem.startsWith('Value error, ')) {
+              mensagemItem = mensagemItem.replace('Value error, ', '');
+            } else if (mensagemItem.includes('String should match pattern')) {
+              mensagemItem = 'está em um formato inválido';
+            } else if (mensagemItem === 'Field required') {
+              mensagemItem = 'é obrigatório';
+            }
+
+            return `${campo}: ${mensagemItem}`;
           }
 
           return String(item);
         })
-        .join("; ");
+        .join(" | ");
 
       throw new Error(mensagem || `Erro na requisição (${res.status})`);
     }
@@ -45,14 +64,18 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 function normalizarAlergiasParaEnvio(alergias?: string | string[] | null) {
+  if (alergias === null || alergias === '') {
+    return [];
+  }
+
   if (Array.isArray(alergias)) {
     const itens = alergias.map((alergia) => alergia.trim()).filter(Boolean);
-    return itens.length > 0 ? itens : undefined;
+    return itens;
   }
 
   const valor = alergias?.trim();
   if (!valor) {
-    return undefined;
+    return [];
   }
 
   return valor
