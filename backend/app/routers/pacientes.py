@@ -1,120 +1,127 @@
-from fastapi import APIRouter, HTTPException
-from app.database import get_db_connection
-from app.sql_loader import load_query
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models.pessoa import Pessoa
+from app.models.paciente import Paciente
+from app.models.alergia import Alergia
+from app.models.atendimento import Atendimento
 from app.schemas.paciente import (
     PacienteCreate,
     PacienteCreateOut,
     PacienteOut,
-    PacienteUpdate, 
+    PacienteUpdate,
     PacienteUpdateOut
 )
 from app.schemas.atendimento import AtendimentoOut
 
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
-ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
+
 
 # Função auxiliar para salvar alergias de um paciente.
-def salvar_alergias(cursor, id_pessoa: int, alergias: list[str] | str | None) -> None:
+# Recebe a lista ou string separada por vírgula)de alergias, garante que
+# cada uma exista na tabela alergias (get-or-create) e associa ao paciente
+def salvar_alergias(db: Session, paciente: Paciente, alergias: list[str] | str | None) -> None:
     if alergias is None:
         return
 
     if isinstance(alergias, str):
         alergias = [item.strip() for item in alergias.split(",") if item.strip()]
 
-    for alergia in alergias:
-        alergia = alergia.strip()
-        if not alergia:
+    for nome_alergia in alergias:
+        nome_alergia = nome_alergia.strip()
+        if not nome_alergia:
             continue
-        cursor.execute(load_query(ARQUIVO_SQL, "inserir_alergia"), (alergia,))
-        id_alergia = cursor.fetchone()["id_alergia"]
-        cursor.execute(load_query(ARQUIVO_SQL, "inserir_paciente_alergia"), (id_pessoa, id_alergia))
+
+        # Tenta encontrar a alergia já existente, senão cria
+        alergia = db.query(Alergia).filter(Alergia.nome == nome_alergia).first()
+        if alergia is None:
+            alergia = Alergia(nome=nome_alergia)
+            db.add(alergia)
+            db.flush()  # garante que id_alergia seja gerado antes de associar
+
+        paciente.alergias.append(alergia)
+
 
 @router.post("", response_model=PacienteCreateOut, status_code=201)
 # o response model ele formata a saida final usando o schemas definido para isso
 # o 201 é o codigo de status HTTP que significa criado
-def criar_paciente(paciente: PacienteCreate):
-# valida a entrada do usuario com o response model antes já definido
+def criar_paciente(paciente: PacienteCreate, db: Session = Depends(get_db)):
+    # valida a entrada do usuario com o response model antes já definido
     try:
-        # load_query vai atrás procurar no crud esse de inserir pessoa e inserir paciente
-        sql_pessoa = load_query(ARQUIVO_SQL, "inserir_pessoa")
-        sql_paciente = load_query(ARQUIVO_SQL, "inserir_paciente")
-        
-        # abre a conexão com o banco de dados
-        with get_db_connection() as conn:
-            with conn: # dentro do conn garante que se der erro ele desfaz a operação, fazendo com que o banco de dados fique como estava antes do erro
-                with conn.cursor() as cursor:
-                    # Inserir a Pessoa
-                    cursor.execute(sql_pessoa, (
-                        paciente.nome,
-                        paciente.cpf,
-                        paciente.data_nascimento,
-                        paciente.is_flamengo,
-                        paciente.telefone
-                    ))
-                    
-                    result = cursor.fetchone()
-                    id_pessoa = result["id_pessoa"]
-                    
-                    # Inserir o Paciente
-                    cursor.execute(sql_paciente, (
-                        id_pessoa,
-                        paciente.num_convenio,
-                        paciente.grupo_sanguineo
-                    ))
+        # Inserir a Pessoa
+        nova_pessoa = Pessoa(
+            nome=paciente.nome,
+            cpf=paciente.cpf,
+            data_nascimento=paciente.data_nascimento,
+            is_flamengo=paciente.is_flamengo,
+            telefone=paciente.telefone,
+        )
+        db.add(nova_pessoa)
+        db.flush()  # gera o id_pessoa antes de criar o Paciente
 
-                    salvar_alergias(cursor, id_pessoa, paciente.alergias)
-                    
-        return PacienteCreateOut(id_pessoa=id_pessoa)
-        
+        # Inserir o Paciente
+        novo_paciente = Paciente(
+            id_pessoa=nova_pessoa.id_pessoa,
+            num_convenio=paciente.num_convenio,
+            grupo_sanguineo=paciente.grupo_sanguineo,
+        )
+        db.add(novo_paciente)
+        db.flush()
+
+        salvar_alergias(db, novo_paciente, paciente.alergias)
+
+        db.commit()
+        return PacienteCreateOut(id_pessoa=nova_pessoa.id_pessoa)
+
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("", response_model=list[PacienteOut])
-def listar_pacientes():
+def listar_pacientes(db: Session = Depends(get_db)):
     try:
-        sql = load_query(ARQUIVO_SQL, "listar_pacientes")
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql)
-                return cursor.fetchall()
+        return db.query(Paciente).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# rota para listar os atendimentos de um paciente específico.
+
+# rota para listar os atendimentos de um paciente específico
 @router.get("/{id_paciente}/atendimentos", response_model=list[AtendimentoOut])
-def listar_atendimentos_do_paciente(id_paciente: int):
+def listar_atendimentos_do_paciente(id_paciente: int, db: Session = Depends(get_db)):
     try:
-        sql = load_query(ARQUIVO_SQL, "listar_atendimentos")
-
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql, (id_paciente,))
-                return cursor.fetchall()
+        return (
+            db.query(Atendimento)
+            .filter(Atendimento.id_paciente == id_paciente)
+            .all()
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# rota para atualizar os dados de um paciente específico. 
-# Atende tanto a atualização do número do convênio quanto das alergias.
-# Os demais dados do paciente não podem ser atualizados através desta rota pois não estao no schema pydantic.
-@router.patch("/{id_paciente}", response_model=PacienteUpdateOut)
-def atualizar_paciente(id_paciente: int, dados: PacienteUpdate):
-    try:
-        with get_db_connection() as conn:
-            with conn: 
-                with conn.cursor() as cursor:
-                    if dados.num_convenio is not None:
-                        sql = load_query(ARQUIVO_SQL, "atualizar_paciente_convenio")
-                        cursor.execute(sql, (dados.num_convenio, id_paciente))
-    
-                    if dados.alergias is not None:
-                        cursor.execute(
-                            load_query(ARQUIVO_SQL, "remover_alergias_paciente"),
-                            (id_paciente,)
-                        )
-                        salvar_alergias(cursor, id_paciente, dados.alergias)
 
+# rota para atualizar os dados de um paciente específico
+# Atende tanto a atualização do número do convênio quanto das alergias
+# Os demais dados do paciente não podem ser atualizados através desta rota pois não estao no schema pydantic
+@router.patch("/{id_paciente}", response_model=PacienteUpdateOut)
+def atualizar_paciente(id_paciente: int, dados: PacienteUpdate, db: Session = Depends(get_db)):
+    try:
+        paciente = db.query(Paciente).filter(Paciente.id_pessoa == id_paciente).first()
+        if paciente is None:
+            raise HTTPException(status_code=404, detail="Paciente não encontrado.")
+
+        if dados.num_convenio is not None:
+            paciente.num_convenio = dados.num_convenio
+
+        if dados.alergias is not None:
+            # Remove as alergias atuais e insere as novas
+            paciente.alergias.clear()
+            salvar_alergias(db, paciente, dados.alergias)
+
+        db.commit()
         return PacienteUpdateOut(id_pessoa=id_paciente)
 
+    except HTTPException:
+        raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
