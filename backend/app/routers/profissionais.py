@@ -3,14 +3,43 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import Pessoa, Profissional, Residente, Preceptor
 from app.schemas.profissional import (
-    ResidenteCreate,
-    ResidenteCreateOut,
     PreceptorCreate,
     PreceptorCreateOut,
-    ProfissionalOut
+    ProfissionalOut,
+    ResidenteCreate,
+    ResidenteCreateOut,
 )
+from app.sql_loader import load_query
 
 router = APIRouter(tags=["Profissionais"])
+
+
+def inserir_pessoa(db: Session, dados: ResidenteCreate | PreceptorCreate) -> int:
+    return db.execute(
+        insert(Pessoa.__table__)
+        .values(
+            nome=dados.nome,
+            cpf=dados.cpf,
+            data_nascimento=dados.data_nascimento,
+            is_flamengo=dados.is_flamengo,
+            telefone=dados.telefone,
+        )
+        .returning(Pessoa.id_pessoa)
+    ).scalar_one()
+
+
+def inserir_profissional(
+    db: Session, id_pessoa: int, dados: ResidenteCreate | PreceptorCreate
+) -> None:
+    db.execute(
+        insert(Profissional.__table__).values(
+            id_pessoa=id_pessoa,
+            crm=dados.crm,
+            data_admissao=dados.data_admissao,
+            especialidade=dados.especialidade,
+        )
+    )
+
 
 @router.post("/residentes", response_model=ResidenteCreateOut, status_code=201)
 def criar_residente(residente: ResidenteCreate, db: Session = Depends(get_db)):

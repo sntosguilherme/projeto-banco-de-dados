@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.models import Pessoa, Residente, Atendimento
 from app.schemas.residentes import TempoMedioResidenteOut
+from app.sql_loader import load_query
 
 router = APIRouter(prefix="/residentes", tags=["Residentes"])
 

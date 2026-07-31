@@ -11,8 +11,6 @@ services:
       - ${DB_PORT}:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./sql/ddl/01_create_tables.sql:/docker-entrypoint-initdb.d/01_create_tables.sql
-      - ./sql/dml/02_insert_data.sql:/docker-entrypoint-initdb.d/02_insert_data.sql
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
@@ -33,6 +31,9 @@ services:
       - ./sql:/sql
     ports:
       - "8000:8000"
+    command: >
+      sh -c "alembic -c alembic.ini upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

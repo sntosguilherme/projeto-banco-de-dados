@@ -6,7 +6,7 @@ Este repositório contém o projeto de banco de dados da equipe, desenvolvido co
 
 O projeto adota uma arquitetura em microsserviços (conteinerizada), dividida nas seguintes camadas:
 
-1. **Banco de Dados (Database):** PostgreSQL 16. O banco é inicializado automaticamente com os scripts DDL e DML presentes na pasta `sql/`.
+1. **Banco de Dados (Database):** PostgreSQL 16. O esquema e os dados de teste são gerenciados por migrations do Alembic.
 2. **Backend (API):** Desenvolvido em Python 3 utilizando o framework FastAPI. Responsável por expor os endpoints REST, aplicar regras de negócio e realizar a comunicação direta com o banco de dados (usando `psycopg2`).
 3. **Frontend (UI):** Aplicação web desenvolvida em React utilizando o framework Next.js. Consome a API do backend para exibir as listagens, gráficos e formulários do sistema do hospital.
 
@@ -54,7 +54,7 @@ O projeto possui um arquivo `docker-compose.yml` já configurado com a orquestra
 docker compose up -d --build
 ```
 
-O Docker se encarregará de fazer o build do backend e do frontend, além de subir o banco de dados e rodar os scripts SQL (`01_create_tables.sql` e `02_insert_data.sql`) de forma automatizada na primeira vez que o container subir.
+O Docker se encarregará de fazer o build do backend e do frontend e executar `alembic upgrade head` para criar o esquema e inserir os dados de teste.
 
 **Acessando os serviços:**
 - **Frontend (Painel Administrativo):** http://localhost:3000
@@ -75,7 +75,12 @@ Se você for desenvolver ou quiser testar os componentes individualmente rodando
 ### 1. Banco de Dados (PostgreSQL)
 Se você tem um Postgres rodando localmente (ou subir apenas o container do banco com `docker compose up -d db`), garanta que o `.env` esteja com `DB_HOST=localhost` e `DATABASE_URL` apontando para o `localhost`.
 
-Se for a primeira execução local, certifique-se de criar o banco e rodar os scripts da pasta `sql/ddl/` e `sql/dml/`.
+Se for a primeira execução local, crie o banco e aplique as migrations:
+
+```bash
+cd backend
+alembic -c alembic.ini upgrade head
+```
 
 ### 2. Backend (FastAPI)
 O backend usa as dependências listadas em `backend/requirements.txt`.
@@ -131,4 +136,4 @@ O painel do Frontend ficará disponível em `http://localhost:3000`.
 
 ## Observações Importantes
 
-- **Reset do Banco de Dados:** Se você alterar os scripts em `sql/ddl` ou `sql/dml` depois que o volume do PostgreSQL já foi criado via Docker, será necessário remover o volume do banco para que a inicialização rode novamente. Você pode fazer isso rodando `docker compose down -v`.
+- **Reset do Banco de Dados:** Para recriar o banco desde a primeira migration, remova o volume com `docker compose down -v` antes de subir os serviços novamente.

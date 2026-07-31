@@ -5,13 +5,19 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.models import Pessoa, Residente, Preceptor, Profissional, Atendimento, Escala, Unidade, Paciente, ProcedimentoRealizado, Procedimento
 from app.schemas.relatorios import (
-    RankingResidenteOut,
-    PreceptorSupervisorOut,
-    PlantaoPorUnidadeOut,
     PacienteSemProcedimentoAltoRiscoOut,
+    PlantaoPorUnidadeOut,
+    PreceptorSupervisorOut,
+    RankingResidenteOut,
 )
+from app.sql_loader import load_query
 
 router = APIRouter(tags=["Relatórios"])
+
+
+def executar_relatorio(db: Session, nome_query: str):
+    query = load_query(ARQUIVO_SQL, nome_query)
+    return db.execute(text(query)).mappings().all()
 
 
 @router.get("/residentes/ranking", response_model=list[RankingResidenteOut])

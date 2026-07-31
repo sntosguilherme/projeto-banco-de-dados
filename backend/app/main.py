@@ -2,7 +2,6 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import get_db_connection
 from app.routers import pacientes, atendimentos, procedimento_realizado, relatorios, health, profissionais, residentes, catalogo_procedimentos
 
 
