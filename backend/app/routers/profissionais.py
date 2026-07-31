@@ -1,106 +1,93 @@
-from fastapi import APIRouter, HTTPException
-from app.database import get_db_connection
-from app.sql_loader import load_query
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import insert, text
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.models import Pessoa, Preceptor, Profissional, Residente
 from app.schemas.profissional import (
-    ResidenteCreate,
-    ResidenteCreateOut,
     PreceptorCreate,
     PreceptorCreateOut,
-    ProfissionalOut
+    ProfissionalOut,
+    ResidenteCreate,
+    ResidenteCreateOut,
 )
+from app.sql_loader import load_query
 
 router = APIRouter(tags=["Profissionais"])
 ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
 
+
+def inserir_pessoa(db: Session, dados: ResidenteCreate | PreceptorCreate) -> int:
+    return db.execute(
+        insert(Pessoa.__table__)
+        .values(
+            nome=dados.nome,
+            cpf=dados.cpf,
+            data_nascimento=dados.data_nascimento,
+            is_flamengo=dados.is_flamengo,
+            telefone=dados.telefone,
+        )
+        .returning(Pessoa.id_pessoa)
+    ).scalar_one()
+
+
+def inserir_profissional(
+    db: Session, id_pessoa: int, dados: ResidenteCreate | PreceptorCreate
+) -> None:
+    db.execute(
+        insert(Profissional.__table__).values(
+            id_pessoa=id_pessoa,
+            crm=dados.crm,
+            data_admissao=dados.data_admissao,
+            especialidade=dados.especialidade,
+        )
+    )
+
+
 @router.post("/residentes", response_model=ResidenteCreateOut, status_code=201)
-def criar_residente(residente: ResidenteCreate):
+def criar_residente(
+    residente: ResidenteCreate, db: Session = Depends(get_db)
+):
     try:
-        sql_pessoa = load_query(ARQUIVO_SQL, "inserir_pessoa")
-        sql_profissional = load_query(ARQUIVO_SQL, "inserir_profissional")
-        sql_residente = load_query(ARQUIVO_SQL, "inserir_residente")
-        
-        with get_db_connection() as conn:
-            with conn: 
-                with conn.cursor() as cursor:
-                    # Inserir a Pessoa
-                    cursor.execute(sql_pessoa, (
-                        residente.nome,
-                        residente.cpf,
-                        residente.data_nascimento,
-                        residente.is_flamengo,
-                        residente.telefone
-                    ))
-                    
-                    result = cursor.fetchone()
-                    id_pessoa = result["id_pessoa"]
-                    
-                    # Inserir o Profissional
-                    cursor.execute(sql_profissional, (
-                        id_pessoa,
-                        residente.crm,
-                        residente.data_admissao,
-                        residente.especialidade
-                    ))
-                    
-                    # Inserir o Residente
-                    cursor.execute(sql_residente, (
-                        id_pessoa,
-                        residente.ano_residencia
-                    ))
-                    
+        id_pessoa = inserir_pessoa(db, residente)
+        inserir_profissional(db, id_pessoa, residente)
+        db.execute(
+            insert(Residente.__table__).values(
+                id_profissional=id_pessoa,
+                ano_residencia=residente.ano_residencia,
+            )
+        )
+        db.commit()
         return ResidenteCreateOut(id_pessoa=id_pessoa)
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc))
+
 
 @router.post("/preceptores", response_model=PreceptorCreateOut, status_code=201)
-def criar_preceptor(preceptor: PreceptorCreate):
+def criar_preceptor(
+    preceptor: PreceptorCreate, db: Session = Depends(get_db)
+):
     try:
-        sql_pessoa = load_query(ARQUIVO_SQL, "inserir_pessoa")
-        sql_profissional = load_query(ARQUIVO_SQL, "inserir_profissional")
-        sql_preceptor = load_query(ARQUIVO_SQL, "inserir_preceptor")
-        
-        with get_db_connection() as conn:
-            with conn: 
-                with conn.cursor() as cursor:
-                    # Inserir a Pessoa
-                    cursor.execute(sql_pessoa, (
-                        preceptor.nome,
-                        preceptor.cpf,
-                        preceptor.data_nascimento,
-                        preceptor.is_flamengo,
-                        preceptor.telefone
-                    ))
-                    
-                    result = cursor.fetchone()
-                    id_pessoa = result["id_pessoa"]
-                    
-                    # Inserir o Profissional
-                    cursor.execute(sql_profissional, (
-                        id_pessoa,
-                        preceptor.crm,
-                        preceptor.data_admissao,
-                        preceptor.especialidade
-                    ))
-                    
-                    # Inserir o Preceptor
-                    cursor.execute(sql_preceptor, (
-                        id_pessoa,
-                        preceptor.titulacao
-                    ))
-                    
+        id_pessoa = inserir_pessoa(db, preceptor)
+        inserir_profissional(db, id_pessoa, preceptor)
+        db.execute(
+            insert(Preceptor.__table__).values(
+                id_profissional=id_pessoa,
+                titulacao=preceptor.titulacao,
+            )
+        )
+        db.commit()
         return PreceptorCreateOut(id_pessoa=id_pessoa)
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc))
+
 
 @router.get("/profissionais", response_model=list[ProfissionalOut])
-def listar_profissionais():
+def listar_profissionais(db: Session = Depends(get_db)):
     try:
         sql = load_query(ARQUIVO_SQL, "listar_profissionais")
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql)
-                return cursor.fetchall()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return db.execute(text(sql)).mappings().all()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))

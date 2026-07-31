@@ -1,20 +1,16 @@
-from fastapi import APIRouter
-from app.database import get_db_connection
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 
 router = APIRouter()
 
-# rota para verificar a saúde da API e a conexão com o banco de dados.
-@router.get("/health") 
-def health():
+
+@router.get("/health")
+def health(db: Session = Depends(get_db)):
     try:
-        
-        # Testa a conexão com o banco de dados PostgreSQL usando a função get_db_connection() definida em app/database.py.
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1;")
-                cur.fetchone()
-                
+        db.execute(text("SELECT 1")).scalar_one()
         return {"status": "ok", "db": "up"}
-        
-    except Exception as e:
-        return {"status": "error", "db": "down", "detail": str(e)}
+    except Exception as exc:
+        return {"status": "error", "db": "down", "detail": str(exc)}

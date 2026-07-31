@@ -1,7 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from app.database import get_db_connection
-from app.sql_loader import load_query
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 from app.schemas.residentes import TempoMedioResidenteOut
+from app.sql_loader import load_query
 
 router = APIRouter(prefix="/residentes", tags=["Residentes"])
 ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
@@ -11,13 +14,12 @@ ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
     "/metricas/tempo-medio-atendimento",
     response_model=list[TempoMedioResidenteOut],
 )
-def tempo_medio_atendimento_por_residente():
+def tempo_medio_atendimento_por_residente(db: Session = Depends(get_db)):
     try:
         sql = load_query(ARQUIVO_SQL, "tempo_medio_atendimento")
-
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql)
-                return cursor.fetchall()
+        return db.execute(text(sql)).mappings().all()
     except Exception:
-        raise HTTPException(status_code=500, detail="Erro interno ao buscar métricas de tempo médio de atendimento.")
+        raise HTTPException(
+            status_code=500,
+            detail="Erro interno ao buscar métricas de tempo médio de atendimento.",
+        )

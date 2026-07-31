@@ -1,4 +1,4 @@
-"""SQLAlchemy database configuration."""
+#Configuração de banco de dados com SQLAlchemy
 
 import os
 from collections.abc import Generator
@@ -24,7 +24,7 @@ SessionLocal = sessionmaker(
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Provide a database session for a FastAPI request."""
+    # Inicializa uma sessão de banco de dados e garante que ela seja fechada após o uso.
     db = SessionLocal()
     try:
         yield db

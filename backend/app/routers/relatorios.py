@@ -1,56 +1,43 @@
-from fastapi import APIRouter
-from app.database import get_db_connection
-from app.sql_loader import load_query
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 from app.schemas.relatorios import (
-    RankingResidenteOut,
-    PreceptorSupervisorOut,
-    PlantaoPorUnidadeOut,
     PacienteSemProcedimentoAltoRiscoOut,
+    PlantaoPorUnidadeOut,
+    PreceptorSupervisorOut,
+    RankingResidenteOut,
 )
+from app.sql_loader import load_query
 
 router = APIRouter(tags=["Relatórios"])
-
 ARQUIVO_SQL = "04_analytical_queries.sql"
 
 
+def executar_relatorio(db: Session, nome_query: str):
+    query = load_query(ARQUIVO_SQL, nome_query)
+    return db.execute(text(query)).mappings().all()
+
+
 @router.get("/residentes/ranking", response_model=list[RankingResidenteOut])
-def ranking_residentes():
-    # Ranking dos residentes com base na quantidade de atendimentos realizados.
-    query = load_query(ARQUIVO_SQL, "ranking_residentes_atendimentos")
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query)
-            return cur.fetchall()
+def ranking_residentes(db: Session = Depends(get_db)):
+    return executar_relatorio(db, "ranking_residentes_atendimentos")
 
 
 @router.get("/preceptores/supervisao", response_model=list[PreceptorSupervisorOut])
-def preceptores_mais_de_5_atendimentos():
-    # Preceptores que supervisionaram mais de 5 atendimentos em um mês específico.
-    query = load_query(ARQUIVO_SQL, "preceptores_mais_de_5_atendimentos_mes")
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query)
-            return cur.fetchall()
+def preceptores_mais_de_5_atendimentos(db: Session = Depends(get_db)):
+    return executar_relatorio(db, "preceptores_mais_de_5_atendimentos_mes")
 
 
 @router.get("/unidades/plantoes", response_model=list[PlantaoPorUnidadeOut])
-def plantoes_por_unidade():
-    # Quantidade de plantões realizados por residente em cada unidade hospitalar.
-    query = load_query(ARQUIVO_SQL, "plantoes_por_residente_unidade")
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query)
-            return cur.fetchall()
+def plantoes_por_unidade(db: Session = Depends(get_db)):
+    return executar_relatorio(db, "plantoes_por_residente_unidade")
 
 
 @router.get(
     "/pacientes/sem-procedimento-alto-risco",
     response_model=list[PacienteSemProcedimentoAltoRiscoOut],
 )
-def pacientes_sem_procedimento_alto_risco():
-    # Pacientes que não receberam nenhum procedimento de alto risco durante seus atendimentos.
-    query = load_query(ARQUIVO_SQL, "pacientes_sem_procedimento_alto_risco")
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query)
-            return cur.fetchall()
+def pacientes_sem_procedimento_alto_risco(db: Session = Depends(get_db)):
+    return executar_relatorio(db, "pacientes_sem_procedimento_alto_risco")
