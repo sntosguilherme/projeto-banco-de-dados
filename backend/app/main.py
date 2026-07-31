@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_db_connection
-from app.routers import pacientes, atendimentos, procedimentos, relatorios, health, profissionais, residentes, catalogo_procedimentos
+from app.routers import pacientes, atendimentos, procedimento_realizado, relatorios, health, profissionais, residentes, catalogo_procedimentos
 
 
 # Criação da instância do FastAPI com o título "Sistema Hospitalar Dra. Yuska Maritan Brito".
@@ -21,7 +21,7 @@ app.add_middleware(
 #registra as rotas de cada arquivo do routers/ na aplicação
 app.include_router(pacientes.router)
 app.include_router(atendimentos.router)
-app.include_router(procedimentos.router)
+app.include_router(procedimento_realizado.router)
 app.include_router(catalogo_procedimentos.router)
 app.include_router(relatorios.router)
 app.include_router(health.router)  
