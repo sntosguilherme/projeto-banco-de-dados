@@ -1,23 +1,32 @@
-from fastapi import APIRouter, HTTPException
-from app.database import get_db_connection
-from app.sql_loader import load_query
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+
+from app.database import get_db
+from app.models.models import Pessoa, Residente, Atendimento
 from app.schemas.residentes import TempoMedioResidenteOut
 
 router = APIRouter(prefix="/residentes", tags=["Residentes"])
-ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
 
 
 @router.get(
     "/metricas/tempo-medio-atendimento",
     response_model=list[TempoMedioResidenteOut],
 )
-def tempo_medio_atendimento_por_residente():
+def tempo_medio_atendimento_por_residente(db: Session = Depends(get_db)):
     try:
-        sql = load_query(ARQUIVO_SQL, "tempo_medio_atendimento")
-
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql)
-                return cursor.fetchall()
-    except Exception:
-        raise HTTPException(status_code=500, detail="Erro interno ao buscar métricas de tempo médio de atendimento.")
+        resultados = (
+            db.query(
+                Pessoa.nome.label("nome_residente"),
+                Residente.ano_residencia,
+                func.round(func.avg(Atendimento.duracao_minutos), 2).label("tempo_medio_atendimento")
+            )
+            .join(Residente, Atendimento.id_residente == Residente.id_profissional)
+            .join(Pessoa, Residente.id_profissional == Pessoa.id_pessoa)
+            .group_by(Residente.id_profissional, Pessoa.nome, Residente.ano_residencia)
+            .order_by(func.round(func.avg(Atendimento.duracao_minutos), 2).desc())
+            .all()
+        )
+        return resultados
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
