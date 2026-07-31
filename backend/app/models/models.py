@@ -79,7 +79,8 @@ t_vw_estatisticas_atendimentos_mensal = Table(
     Column('unidade', String(100)),
     Column('total_atendimentos', BigInteger),
     Column('media_duracao', Numeric),
-    Column('procedimento_mais_comum', String)
+    Column('procedimento_mais_comum', String),
+    info={"is_view": True}
 )
 
 # view de pacientes internados, incluindo nome do paciente, data e hora de entrada e unidade de internação.
@@ -87,7 +88,8 @@ t_vw_pacientes_internados = Table(
     'vw_pacientes_internados', Base.metadata,
     Column('paciente_nome', String(100)),
     Column('data_hora_entrada', DateTime),
-    Column('unidade_internacao', String(100))
+    Column('unidade_internacao', String(100)),
+    info={"is_view": True}
 )
 
 # view de residentes sem supervisor, incluindo nome do residente, nome do preceptor, titulação do preceptor e se a supervisão está ativa.
@@ -96,7 +98,8 @@ t_vw_residentes_sem_supervisor = Table(
     Column('residente_nome', String(100)),
     Column('preceptor_nome', String(100)),
     Column('preceptor_titulacao', String(50)),
-    Column('supervisao_ativa', Boolean)
+    Column('supervisao_ativa', Boolean),
+    info={"is_view": True}
 )
 
 # Tabela paciente com todas as restrições de integridade, incluindo grupo sanguíneo e número de convênio.
