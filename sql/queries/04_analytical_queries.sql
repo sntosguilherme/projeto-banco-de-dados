@@ -85,14 +85,14 @@ WHERE pac.id_pessoa NOT IN (
     SELECT a.id_paciente
     FROM ATENDIMENTO a
         -- PROCEDIMENTO_REALIZADO é a tabela que liga atendimento com
-        -- procedimento (um atendimento pode ter vários procedimentos e
-        -- vice versa), por isso precisa passar por ela pra chegar no nivel_risco
+        -- procedimento, um atendimento pode ter vários procedimentos e
+        -- vice versa, por isso precisa passar por ela pra chegar no nivel_risco
         JOIN PROCEDIMENTO_REALIZADO pre ON pre.id_atendimento = a.id_atendimento
         -- nivel_risco só existe lá em PROCEDIMENTO mesmo
         JOIN PROCEDIMENTO proc ON proc.id_procedimento = pre.id_procedimento
     WHERE proc.nivel_risco = 'ALTO'
-    -- essa lista pode vir com id repetido (exemplo se a alguém fez 2
-    -- procedimentos ALTO, o id dela aparece 2 vezes na lista), mas isso
+    -- essa lista pode vir com id repetido, exemplo se a alguém fez 2
+    -- procedimentos ALTO, o id dela aparece 2 vezes na lista, mas isso
     -- não atrapalha em nada
 )
 -- pra cada paciente, o banco testa - seu id tá dentro dessa listona

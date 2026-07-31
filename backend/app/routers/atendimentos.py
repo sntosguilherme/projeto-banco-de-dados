@@ -1,49 +1,49 @@
-from fastapi import APIRouter, HTTPException
-from app.database import get_db_connection
-from app.sql_loader import load_query
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from app.database import get_db
+from app.models.models import Atendimento
 from app.schemas.atendimento import AtendimentoCreate, AtendimentoCreateOut, AtendimentoOut
-from psycopg2 import errors as pg_errors
 
 router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])
-ARQUIVO_SQL = "03_crud_and_basic_queries.sql"
+
 
 # Rota para criar um novo atendimento
 @router.post("", response_model=AtendimentoCreateOut)
-def criar_atendimento(dados: AtendimentoCreate):
+def criar_atendimento(dados: AtendimentoCreate, db: Session = Depends(get_db)):
     try:
-        sql = load_query(ARQUIVO_SQL, "inserir_atendimento")
+        novo_atendimento = Atendimento(
+            data_hora=dados.data_hora,
+            duracao_minutos=dados.duracao_minutos,
+            id_paciente=dados.id_paciente,
+            id_residente=dados.id_residente,
+            id_preceptor=dados.id_preceptor,
+        )
+        db.add(novo_atendimento)
+        db.commit()
+        db.refresh(novo_atendimento)
 
-        with get_db_connection() as conn:
-            with conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(sql, (
-                        dados.data_hora,
-                        dados.duracao_minutos,
-                        dados.id_paciente,
-                        dados.id_residente,
-                        dados.id_preceptor,
-                    ))
-                    resultado = cursor.fetchone()
-                    return AtendimentoCreateOut(id_atendimento=resultado["id_atendimento"])
+        return AtendimentoCreateOut(id_atendimento=novo_atendimento.id_atendimento)
 
-    except pg_errors.ForeignKeyViolation:
+    # SQLAlchemy encapsula qualquer erro de integridade do banco
+    # (violação de FK, unique, not null) em IntegrityError
+    # Aqui assumimos que neste contexto o erro mais provável é uma violação de chave estrangeira
+    # inexistente
+    except IntegrityError:
+        db.rollback()
         raise HTTPException(
             status_code=404,
             detail="Paciente, residente ou preceptor informado não existe.",
         )
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 # Rota para listar o histórico geral de todos os atendimentos
 @router.get("", response_model=list[AtendimentoOut])
-def listar_historico_atendimentos():
+def listar_historico_atendimentos(db: Session = Depends(get_db)):
     try:
-        sql = load_query(ARQUIVO_SQL, "listar_historico_atendimentos")
-
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql)
-                return cursor.fetchall()
-                
+        return db.query(Atendimento).order_by(Atendimento.data_hora.desc()).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
