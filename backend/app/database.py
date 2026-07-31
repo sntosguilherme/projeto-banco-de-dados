@@ -1,22 +1,32 @@
-# Configuração da conexão com PostgreSQL (psycopg2)
+"""SQLAlchemy database configuration."""
 
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from contextlib import contextmanager
+from collections.abc import Generator
+
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 load_dotenv()
 
-# Configuração da URL de conexão com o banco de dados. 
-DB_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-@contextmanager
-def get_db_connection():
-    # Cria uma conexão com o banco de dados PostgreSQL usando psycopg2 e retorna um cursor do tipo RealDictCursor.
-    conn = psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not configured")
+
+engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
+
+
+def get_db() -> Generator[Session, None, None]:
+    """Provide a database session for a FastAPI request."""
+    db = SessionLocal()
     try:
-        yield conn
+        yield db
     finally:
-        conn.close()
-
+        db.close()
