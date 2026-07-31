@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.database import get_db
-from app.models.atendimento import Atendimento
+from app.models.models import Atendimento
 from app.schemas.atendimento import AtendimentoCreate, AtendimentoCreateOut, AtendimentoOut
 
 router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])

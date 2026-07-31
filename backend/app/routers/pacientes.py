@@ -1,10 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.pessoa import Pessoa
-from app.models.paciente import Paciente
-from app.models.alergia import Alergia
-from app.models.atendimento import Atendimento
+from app.models.models import Pessoa, Paciente, Alergia, Atendimento
 from app.schemas.paciente import (
     PacienteCreate,
     PacienteCreateOut,
@@ -39,7 +36,7 @@ def salvar_alergias(db: Session, paciente: Paciente, alergias: list[str] | str |
             db.add(alergia)
             db.flush()  # garante que id_alergia seja gerado antes de associar
 
-        paciente.alergias.append(alergia)
+        paciente.alergia.append(alergia)
 
 
 @router.post("", response_model=PacienteCreateOut, status_code=201)
@@ -114,7 +111,7 @@ def atualizar_paciente(id_paciente: int, dados: PacienteUpdate, db: Session = De
 
         if dados.alergias is not None:
             # Remove as alergias atuais e insere as novas
-            paciente.alergias.clear()
+            paciente.alergia.clear()
             salvar_alergias(db, paciente, dados.alergias)
 
         db.commit()

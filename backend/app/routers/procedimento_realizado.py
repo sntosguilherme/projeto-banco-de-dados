@@ -2,9 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
-from app.models.atendimento import Atendimento
-from app.models.catalogo_procedimentos import CatalogoProcedimento
-from app.models.procedimento_realizado import ProcedimentoRealizado
+from app.models.models import Atendimento, Procedimento, ProcedimentoRealizado
 from app.schemas.procedimento import (
     ProcedimentoRealizadoOut,
     ProcedimentoRealizadoDeleteOut,
@@ -95,8 +93,8 @@ def inserir_procedimento_em_atendimento(
 
         # 2 -> verifica se o procedimento existe
         procedimento_existe = (
-            db.query(CatalogoProcedimento)
-            .filter(CatalogoProcedimento.id_procedimento == dados.id_procedimento)
+            db.query(Procedimento)
+            .filter(Procedimento.id_procedimento == dados.id_procedimento)
             .first()
         )
         if not procedimento_existe:

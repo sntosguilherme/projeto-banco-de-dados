@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.catalogo_procedimentos import CatalogoProcedimento
+from app.models.models import Procedimento
 from app.schemas.procedimento import ProcedimentoOut
 
 router = APIRouter(prefix="/procedimentos", tags=["Catálogo de Procedimentos"])
@@ -11,6 +11,6 @@ router = APIRouter(prefix="/procedimentos", tags=["Catálogo de Procedimentos"])
 @router.get("", response_model=list[ProcedimentoOut])
 def listar_todos_procedimentos(db: Session = Depends(get_db)):
     try:
-        return db.query(CatalogoProcedimento).order_by(CatalogoProcedimento.nome).all()
+        return db.query(Procedimento).order_by(Procedimento.nome).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
