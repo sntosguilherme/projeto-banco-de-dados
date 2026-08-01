@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy.exc import IntegrityError
 from app.database import get_db
-from app.models.models import Atendimento
+from app.models.models import Atendimento, Pessoa
 from app.schemas.atendimento import AtendimentoCreate, AtendimentoCreateOut, AtendimentoOut
 
 router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])
@@ -44,6 +44,24 @@ def criar_atendimento(dados: AtendimentoCreate, db: Session = Depends(get_db)):
 @router.get("", response_model=list[AtendimentoOut])
 def listar_historico_atendimentos(db: Session = Depends(get_db)):
     try:
-        return db.query(Atendimento).order_by(Atendimento.data_hora.desc()).all()
+        paciente = aliased(Pessoa.__table__, name="paciente_pessoa")
+        residente = aliased(Pessoa.__table__, name="residente_pessoa")
+        preceptor = aliased(Pessoa.__table__, name="preceptor_pessoa")
+        return (
+            db.query(
+                Atendimento.id_atendimento,
+                Atendimento.data_hora,
+                Atendimento.duracao_minutos,
+                paciente.c.nome.label("nome_paciente"),
+                residente.c.nome.label("nome_residente"),
+                preceptor.c.nome.label("nome_preceptor"),
+            )
+            .select_from(Atendimento.__table__)
+            .join(paciente, paciente.c.id_pessoa == Atendimento.id_paciente)
+            .join(residente, residente.c.id_pessoa == Atendimento.id_residente)
+            .join(preceptor, preceptor.c.id_pessoa == Atendimento.id_preceptor)
+            .order_by(Atendimento.data_hora.desc())
+            .all()
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

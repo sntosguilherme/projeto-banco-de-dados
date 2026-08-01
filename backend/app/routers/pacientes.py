@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy import insert
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import Pessoa, Paciente, Alergia, Atendimento
@@ -56,19 +57,27 @@ def criar_paciente(paciente: PacienteCreate, db: Session = Depends(get_db)):
         db.add(nova_pessoa)
         db.flush()  # gera o id_pessoa antes de criar o Paciente
 
-        # Inserir o Paciente
-        novo_paciente = Paciente(
-            id_pessoa=nova_pessoa.id_pessoa,
-            num_convenio=paciente.num_convenio,
-            grupo_sanguineo=paciente.grupo_sanguineo,
+        # Insere somente na tabela filha. Instanciar Paciente aqui faria o
+        # SQLAlchemy tentar inserir a mesma pessoa novamente por heranca.
+        db.execute(
+            insert(Paciente.__table__).values(
+                id_pessoa=nova_pessoa.id_pessoa,
+                num_convenio=paciente.num_convenio,
+                grupo_sanguineo=paciente.grupo_sanguineo,
+            )
         )
-        db.add(novo_paciente)
         db.flush()
+
+        id_pessoa = nova_pessoa.id_pessoa
+        db.expunge(nova_pessoa)
+        novo_paciente = db.get(Paciente, id_pessoa)
+        if novo_paciente is None:
+            raise RuntimeError("Paciente criado, mas nao foi possivel carrega-lo.")
 
         salvar_alergias(db, novo_paciente, paciente.alergias)
 
         db.commit()
-        return PacienteCreateOut(id_pessoa=nova_pessoa.id_pessoa)
+        return PacienteCreateOut(id_pessoa=id_pessoa)
 
     except Exception as e:
         db.rollback()

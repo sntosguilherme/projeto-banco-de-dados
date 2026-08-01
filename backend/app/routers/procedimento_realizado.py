@@ -20,11 +20,24 @@ router = APIRouter(prefix="/atendimentos", tags=["Procedimentos"])
 )
 def listar_procedimentos_do_atendimento(id_atendimento: int, db: Session = Depends(get_db)):
     try:
-        return (
-            db.query(ProcedimentoRealizado)
+        resultados = (
+            db.query(
+                ProcedimentoRealizado.id_procedimento,
+                Procedimento.nome.label("nome_procedimento"),
+                ProcedimentoRealizado.quantidade,
+                ProcedimentoRealizado.tempo_real_minutos,
+                ProcedimentoRealizado.observacao,
+                ProcedimentoRealizado.faturado,
+            )
+            .join(
+                Procedimento,
+                Procedimento.id_procedimento == ProcedimentoRealizado.id_procedimento,
+            )
             .filter(ProcedimentoRealizado.id_atendimento == id_atendimento)
             .all()
         )
+
+        return [resultado._mapping for resultado in resultados]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -5,7 +5,6 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.models import Pessoa, Residente, Atendimento
 from app.schemas.residentes import TempoMedioResidenteOut
-from app.sql_loader import load_query
 
 router = APIRouter(prefix="/residentes", tags=["Residentes"])
 
@@ -16,16 +15,20 @@ router = APIRouter(prefix="/residentes", tags=["Residentes"])
 )
 def tempo_medio_atendimento_por_residente(db: Session = Depends(get_db)):
     try:
+        pessoa = Pessoa.__table__
+        residente = Residente.__table__
+        atendimento = Atendimento.__table__
         resultados = (
             db.query(
-                Pessoa.nome.label("nome_residente"),
-                Residente.ano_residencia,
-                func.round(func.avg(Atendimento.duracao_minutos), 2).label("tempo_medio_atendimento")
+                pessoa.c.nome.label("nome_residente"),
+                residente.c.ano_residencia,
+                func.round(func.avg(atendimento.c.duracao_minutos), 2).label("tempo_medio_atendimento")
             )
-            .join(Residente, Atendimento.id_residente == Residente.id_profissional)
-            .join(Pessoa, Residente.id_profissional == Pessoa.id_pessoa)
-            .group_by(Residente.id_profissional, Pessoa.nome, Residente.ano_residencia)
-            .order_by(func.round(func.avg(Atendimento.duracao_minutos), 2).desc())
+            .select_from(atendimento)
+            .join(residente, atendimento.c.id_residente == residente.c.id_profissional)
+            .join(pessoa, residente.c.id_profissional == pessoa.c.id_pessoa)
+            .group_by(residente.c.id_profissional, pessoa.c.nome, residente.c.ano_residencia)
+            .order_by(func.round(func.avg(atendimento.c.duracao_minutos), 2).desc())
             .all()
         )
         return resultados
