@@ -28,6 +28,7 @@ def listar_procedimentos_do_atendimento(id_atendimento: int, db: Session = Depen
                 ProcedimentoRealizado.tempo_real_minutos,
                 ProcedimentoRealizado.observacao,
                 ProcedimentoRealizado.faturado,
+                ProcedimentoRealizado.data_hora_inicio,
             )
             .join(
                 Procedimento,
@@ -104,6 +105,15 @@ def inserir_procedimento_em_atendimento(
 
         duracao_atendimento = atendimento.duracao_minutos
 
+        if (
+            dados.data_hora_inicio is not None
+            and dados.data_hora_inicio < atendimento.data_hora
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="O início do procedimento não pode ser anterior ao atendimento.",
+            )
+
         # 2 -> verifica se o procedimento existe
         procedimento_existe = (
             db.query(Procedimento)
@@ -141,6 +151,7 @@ def inserir_procedimento_em_atendimento(
             quantidade=dados.quantidade,
             tempo_real_minutos=dados.tempo_real_minutos,
             observacao=dados.observacao,
+            data_hora_inicio=dados.data_hora_inicio or atendimento.data_hora,
         )
         db.add(novo_procedimento_realizado)
         db.commit()
@@ -152,6 +163,7 @@ def inserir_procedimento_em_atendimento(
             quantidade=novo_procedimento_realizado.quantidade,
             tempo_real_minutos=novo_procedimento_realizado.tempo_real_minutos,
             observacao=novo_procedimento_realizado.observacao,
+            data_hora_inicio=novo_procedimento_realizado.data_hora_inicio,
         )
 
     except HTTPException:

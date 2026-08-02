@@ -1,7 +1,9 @@
 from typing import Optional
 import datetime
+from decimal import Decimal
 
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, Column, Date, DateTime, ForeignKeyConstraint, Integer, MetaData, Numeric, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -53,8 +55,28 @@ class Procedimento(Base):
     nome: Mapped[str] = mapped_column(String(100), nullable=False)
     tempo_medio_minutos: Mapped[int] = mapped_column(Integer, nullable=False)
     nivel_risco: Mapped[Optional[str]] = mapped_column(String(20), server_default=text("'BAIXO'::character varying"))
+    media_tempo_procedimento: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2))
 
     procedimento_realizado: Mapped[list['ProcedimentoRealizado']] = relationship('ProcedimentoRealizado', back_populates='procedimento')
+
+
+class AuditoriaAtendimento(Base):
+    __tablename__ = 'auditoria_atendimento'
+    __table_args__ = (
+        PrimaryKeyConstraint('id_auditoria', name='auditoria_atendimento_pkey'),
+    )
+
+    id_auditoria: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id_atendimento: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    operacao: Mapped[str] = mapped_column(String(10), nullable=False)
+    usuario: Mapped[str] = mapped_column(String(255), nullable=False)
+    dados_antigos: Mapped[Optional[dict]] = mapped_column(JSONB)
+    dados_novos: Mapped[Optional[dict]] = mapped_column(JSONB)
+    data_hora: Mapped[datetime.datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        server_default=text('CURRENT_TIMESTAMP'),
+    )
 
 # Tabela unidade com todas a restrição de capacidade de leitos.
 class Unidade(Base):

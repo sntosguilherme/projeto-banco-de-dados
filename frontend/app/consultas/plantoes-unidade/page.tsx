@@ -93,8 +93,6 @@ export default function PlantoesUnidadePage() {
               </thead>
               <tbody className="divide-y divide-neutral-200 bg-white">
                 {plantoes.map((item, index) => {
-                  // Mapeia de forma segura aceitando 'nome' ou 'residente' baseado no retorno
-                  const nomeResidente = item.nome || (item as any).residente || "Não identificado";
                   const nomeUnidade = item.unidade || "Unidade Geral";
 
                   return (
@@ -111,7 +109,7 @@ export default function PlantoesUnidadePage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-neutral-400" />
-                          <span>{nomeResidente}</span>
+                          <span>{item.residente}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right whitespace-nowrap font-mono text-neutral-900 pr-12">

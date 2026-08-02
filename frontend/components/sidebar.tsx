@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import SidebarScrollArea from './sidebar-scroll-area';
 import { 
   Menu, X, UserPlus, Users, GraduationCap, 
   BarChart3, ClipboardCheck, Clock, AlertTriangle, 
-  FileText, History, Home, LucideIcon 
+  FileText, History, Home, Heart, ShieldAlert, CalendarClock, LucideIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -49,6 +50,36 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         { label: 'Tempo Médio de Atendimento', href: '/consultas/tempo-medio', icon: Clock },
         // app/consultas/pacientes-sem-risco-alto/page.tsx
         { label: 'Pacientes sem Risco Alto', href: '/consultas/pacientes-sem-risco-alto', icon: AlertTriangle },
+        // app/consultas/preceptores-flamenguistas/page.tsx
+        { label: 'Preceptores e Flamenguistas', href: '/consultas/preceptores-flamenguistas', icon: Heart },
+        // app/consultas/ultimos-atendimentos/page.tsx
+        { label: 'Últimos Atendimentos', href: '/consultas/ultimos-atendimentos', icon: History },
+        // app/consultas/percentual-alto-risco/page.tsx
+        { label: 'Alto Risco por Residente', href: '/consultas/percentual-alto-risco', icon: ShieldAlert },
+        // app/consultas/tempo-espera-unidade/page.tsx
+        { label: 'Tempo de Espera por Unidade', href: '/consultas/tempo-espera-unidade', icon: Clock },
+        // app/consultas/procedimentos/page.tsx
+        { label: 'Médias dos Procedimentos', href: '/consultas/procedimentos', icon: BarChart3 },
+      ],
+    },
+    {
+      title: 'Views',
+      links: [
+        { label: 'Estatísticas Mensais', href: '/views/estatisticas-atendimentos', icon: BarChart3 },
+        { label: 'Pacientes Internados', href: '/views/pacientes-internados', icon: Users },
+        { label: 'Supervisões Pendentes', href: '/views/residentes-sem-supervisor', icon: ClipboardCheck },
+      ],
+    },
+    {
+      title: 'Auditorias',
+      links: [
+        { label: 'Atendimentos', href: '/auditorias/atendimentos', icon: FileText },
+      ],
+    },
+    {
+      title: 'Escalas',
+      links: [
+        { label: 'Reajustar Escala', href: '/escalas/reajuste', icon: CalendarClock },
       ],
     },
     {
@@ -93,7 +124,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="h-[calc(100vh-4rem)] overflow-y-auto p-4 space-y-6">
+        <SidebarScrollArea>
           {navigationData.map((section) => (
             <div key={section.title}>
               <p className="px-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
@@ -116,7 +147,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               </div>
             </div>
           ))}
-        </nav>
+        </SidebarScrollArea>
       </aside>
     </>
   );

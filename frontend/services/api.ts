@@ -154,6 +154,7 @@ export interface ProcedimentoAtendimentoOut {
   tempo_real_minutos: number;
   observacao?: string;
   faturado: boolean;
+  data_hora_inicio?: string;
 }
 
 export interface ProcedimentoBase {
@@ -162,6 +163,7 @@ export interface ProcedimentoBase {
   nome: string;
   tempo_medio_minutos: number;
   nivel_risco: string;
+  media_tempo_procedimento?: number | null;
 }
 
 export interface AdicionarProcedimentoInput {
@@ -169,6 +171,103 @@ export interface AdicionarProcedimentoInput {
   quantidade: number;
   tempo_real_minutos: number;
   observacao?: string;
+  data_hora_inicio?: string;
+}
+
+export interface ProcedimentoAtendimentoCompletoInput
+  extends AdicionarProcedimentoInput {
+  faturado: boolean;
+}
+
+export interface CriarAtendimentoCompletoInput extends CriarAtendimentoInput {
+  procedimentos: ProcedimentoAtendimentoCompletoInput[];
+}
+
+export interface CriarAtendimentoCompletoOut {
+  id_atendimento: number;
+  procedimentos_registrados: number;
+  detail: string;
+}
+
+export interface ProcedimentoRealizadoCreateOut
+  extends AdicionarProcedimentoInput {
+  id_atendimento: number;
+}
+
+export interface ProcedimentoRealizadoDeleteOut {
+  id_atendimento: number;
+  id_procedimento: number;
+  detail: string;
+}
+
+export interface TempoMedioEsperaUnidade {
+  unidade: string;
+  tempo_medio_espera_minutos: number;
+}
+
+export type DiaSemana =
+  | 'Segunda'
+  | 'Terca'
+  | 'Quarta'
+  | 'Quinta'
+  | 'Sexta'
+  | 'Sabado'
+  | 'Domingo';
+
+export type Turno = 'Manha' | 'Tarde' | 'Noite';
+
+export interface ReajustarEscalaInput {
+  id_residente: number;
+  dia_origem: DiaSemana;
+  turno_origem: Turno;
+  dia_destino: DiaSemana;
+  turno_destino: Turno;
+}
+
+export interface ReajustarEscalaOut {
+  escalas_encontradas: number;
+  escalas_reajustadas: number;
+  conflitos_ignorados: number;
+  detail: string;
+}
+
+export interface EstatisticaAtendimentoMensal {
+  mes: string;
+  unidade: string | null;
+  total_atendimentos: number;
+  media_duracao: number;
+  procedimento_mais_comum: string | null;
+}
+
+export interface PacienteInternado {
+  paciente_nome: string;
+  data_hora_entrada: string;
+  unidade_internacao: string;
+}
+
+export interface ResidenteSemSupervisor {
+  residente_nome: string;
+  preceptor_nome: string;
+  preceptor_titulacao: string;
+  supervisao_ativa: boolean;
+}
+
+export type OperacaoAuditoria = 'INSERT' | 'UPDATE' | 'DELETE';
+
+export interface AuditoriaAtendimento {
+  id_auditoria: number;
+  id_atendimento: number;
+  operacao: OperacaoAuditoria;
+  usuario: string;
+  dados_antigos: Record<string, unknown> | null;
+  dados_novos: Record<string, unknown> | null;
+  data_hora: string;
+}
+
+export interface FiltrosAuditoriaAtendimento {
+  operacao?: OperacaoAuditoria;
+  id_atendimento?: number;
+  limite?: number;
 }
 
 // =====================================================================
@@ -199,27 +298,60 @@ export interface ProfissionalGeral {
 // =====================================================================
 
 export interface ResidenteRanking {
-  nome: string;
+  residente: string;
   total_atendimentos: number;
 }
 
 export interface PreceptorSupervisao {
-  nome: string;
+  preceptor: string;
   mes: string;
   total_atendimentos: number;
 }
 
 export interface PlantoesUnidade {
   unidade: string;
-  nome: string;
+  residente: string;
   qtd_plantoes_semanais: number;
 }
 
 export interface PacienteSemRisco {
+  paciente: string;
+}
+
+export interface TempoMedioResidente {
+  nome_residente: string;
+  ano_residencia: string;
+  tempo_medio_atendimento: number;
+}
+
+export interface PreceptorFlamenguista {
+  id_profissional: number;
   nome: string;
-  cpf?: string;
-  num_convenio?: string;
-  alergias?: string;
+  crm: string;
+  titulacao: string;
+}
+
+export interface ProcedimentoUltimoAtendimento {
+  nome_procedimento: string;
+  quantidade: number;
+  tempo_real_minutos: number;
+}
+
+export interface UltimoAtendimentoPaciente {
+  id_atendimento: number;
+  data_hora: string;
+  paciente: string;
+  residente: string;
+  preceptor: string;
+  procedimentos: ProcedimentoUltimoAtendimento[];
+}
+
+export interface PercentualAltoRiscoResidente {
+  id_residente: number;
+  nome_residente: string;
+  total_procedimentos: number;
+  total_alto_risco: number;
+  percentual_alto_risco: number;
 }
 
 export interface CriarPacienteOut {
@@ -294,6 +426,13 @@ export function criarAtendimento(dados: CriarAtendimentoInput) {
   });
 }
 
+export function criarAtendimentoCompleto(dados: CriarAtendimentoCompletoInput) {
+  return apiFetch<CriarAtendimentoCompletoOut>("/atendimentos/completo", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+}
+
 export function listarAtendimentosDoPaciente(idPaciente: number) {
   return apiFetch<Atendimento[]>(`/pacientes/${idPaciente}/atendimentos`);
 }
@@ -308,14 +447,14 @@ export function listarProcedimentosDoAtendimento(idAtendimento: number) {
 }
 
 export function adicionarProcedimento(idAtendimento: number, dados: AdicionarProcedimentoInput) {
-  return apiFetch<any>(`/atendimentos/${idAtendimento}/procedimentos`, {
+  return apiFetch<ProcedimentoRealizadoCreateOut>(`/atendimentos/${idAtendimento}/procedimentos`, {
     method: "POST",
     body: JSON.stringify(dados),
   });
 }
 
 export function removerProcedimento(idAtendimento: number, idProcedimento: number) {
-  return apiFetch<any>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
+  return apiFetch<ProcedimentoRealizadoDeleteOut>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
     method: "DELETE",
   });
 }
@@ -323,6 +462,50 @@ export function removerProcedimento(idAtendimento: number, idProcedimento: numbe
 // --- CATÁLOGO DE PROCEDIMENTOS ---
 export function listarProcedimentos() {
   return apiFetch<ProcedimentoBase[]>('/procedimentos');
+}
+
+// --- STORED PROCEDURES ---
+export function buscarTempoMedioEsperaPorUnidade() {
+  return apiFetch<TempoMedioEsperaUnidade[]>("/unidades/tempo-medio-espera");
+}
+
+export function reajustarEscala(dados: ReajustarEscalaInput) {
+  return apiFetch<ReajustarEscalaOut>("/escalas/reajuste", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+}
+
+// --- VIEWS ---
+export function buscarEstatisticasAtendimentosMensais() {
+  return apiFetch<EstatisticaAtendimentoMensal[]>(
+    "/views/estatisticas-atendimentos-mensais",
+  );
+}
+
+export function buscarPacientesInternados() {
+  return apiFetch<PacienteInternado[]>("/views/pacientes-internados");
+}
+
+export function buscarResidentesSemSupervisor() {
+  return apiFetch<ResidenteSemSupervisor[]>("/views/residentes-sem-supervisor");
+}
+
+// --- AUDITORIAS / TRIGGERS ---
+export function buscarAuditoriasAtendimentos(
+  filtros: FiltrosAuditoriaAtendimento = {},
+) {
+  const parametros = new URLSearchParams();
+  if (filtros.operacao) parametros.set('operacao', filtros.operacao);
+  if (filtros.id_atendimento) {
+    parametros.set('id_atendimento', String(filtros.id_atendimento));
+  }
+  if (filtros.limite) parametros.set('limite', String(filtros.limite));
+
+  const query = parametros.toString();
+  return apiFetch<AuditoriaAtendimento[]>(
+    `/auditorias/atendimentos${query ? `?${query}` : ''}`,
+  );
 }
 
 // --- RELATÓRIOS / CONSULTAS ANALÍTICAS ---
@@ -343,5 +526,21 @@ export function buscarPacientesSemRiscoAlto() {
 }
 
 export function buscarTempoMedioPorResidente() {
-  return apiFetch<any>("/residentes/metricas/tempo-medio-atendimento");
+  return apiFetch<TempoMedioResidente[]>("/residentes/metricas/tempo-medio-atendimento");
+}
+
+export function buscarPreceptoresDePacientesFlamenguistas() {
+  return apiFetch<PreceptorFlamenguista[]>(
+    "/preceptores/supervisionaram-pacientes-flamenguistas",
+  );
+}
+
+export function buscarUltimosAtendimentosPorPaciente() {
+  return apiFetch<UltimoAtendimentoPaciente[]>("/pacientes/ultimo-atendimento");
+}
+
+export function buscarPercentualAltoRiscoPorResidente() {
+  return apiFetch<PercentualAltoRiscoResidente[]>(
+    "/residentes/percentual-alto-risco",
+  );
 }
