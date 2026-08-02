@@ -18,17 +18,21 @@ def tempo_medio_atendimento_por_residente(db: Session = Depends(get_db)):
         pessoa = Pessoa.__table__
         residente = Residente.__table__
         atendimento = Atendimento.__table__
+        tempo_medio = func.coalesce(
+            func.round(func.avg(atendimento.c.duracao_minutos), 2),
+            0,
+        ).label("tempo_medio_atendimento")
         resultados = (
             db.query(
                 pessoa.c.nome.label("nome_residente"),
                 residente.c.ano_residencia,
-                func.round(func.avg(atendimento.c.duracao_minutos), 2).label("tempo_medio_atendimento")
+                tempo_medio,
             )
-            .select_from(atendimento)
-            .join(residente, atendimento.c.id_residente == residente.c.id_profissional)
+            .select_from(residente)
             .join(pessoa, residente.c.id_profissional == pessoa.c.id_pessoa)
+            .outerjoin(atendimento, atendimento.c.id_residente == residente.c.id_profissional)
             .group_by(residente.c.id_profissional, pessoa.c.nome, residente.c.ano_residencia)
-            .order_by(func.round(func.avg(atendimento.c.duracao_minutos), 2).desc())
+            .order_by(tempo_medio.desc())
             .all()
         )
         return resultados
