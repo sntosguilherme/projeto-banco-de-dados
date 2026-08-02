@@ -154,6 +154,7 @@ export interface ProcedimentoAtendimentoOut {
   tempo_real_minutos: number;
   observacao?: string;
   faturado: boolean;
+  data_hora_inicio?: string;
 }
 
 export interface ProcedimentoBase {
@@ -169,6 +170,64 @@ export interface AdicionarProcedimentoInput {
   quantidade: number;
   tempo_real_minutos: number;
   observacao?: string;
+  data_hora_inicio?: string;
+}
+
+export interface ProcedimentoAtendimentoCompletoInput
+  extends AdicionarProcedimentoInput {
+  faturado: boolean;
+}
+
+export interface CriarAtendimentoCompletoInput extends CriarAtendimentoInput {
+  procedimentos: ProcedimentoAtendimentoCompletoInput[];
+}
+
+export interface CriarAtendimentoCompletoOut {
+  id_atendimento: number;
+  procedimentos_registrados: number;
+  detail: string;
+}
+
+export interface ProcedimentoRealizadoCreateOut
+  extends AdicionarProcedimentoInput {
+  id_atendimento: number;
+}
+
+export interface ProcedimentoRealizadoDeleteOut {
+  id_atendimento: number;
+  id_procedimento: number;
+  detail: string;
+}
+
+export interface TempoMedioEsperaUnidade {
+  unidade: string;
+  tempo_medio_espera_minutos: number;
+}
+
+export type DiaSemana =
+  | 'Segunda'
+  | 'Terca'
+  | 'Quarta'
+  | 'Quinta'
+  | 'Sexta'
+  | 'Sabado'
+  | 'Domingo';
+
+export type Turno = 'Manha' | 'Tarde' | 'Noite';
+
+export interface ReajustarEscalaInput {
+  id_residente: number;
+  dia_origem: DiaSemana;
+  turno_origem: Turno;
+  dia_destino: DiaSemana;
+  turno_destino: Turno;
+}
+
+export interface ReajustarEscalaOut {
+  escalas_encontradas: number;
+  escalas_reajustadas: number;
+  conflitos_ignorados: number;
+  detail: string;
 }
 
 // =====================================================================
@@ -327,6 +386,13 @@ export function criarAtendimento(dados: CriarAtendimentoInput) {
   });
 }
 
+export function criarAtendimentoCompleto(dados: CriarAtendimentoCompletoInput) {
+  return apiFetch<CriarAtendimentoCompletoOut>("/atendimentos/completo", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+}
+
 export function listarAtendimentosDoPaciente(idPaciente: number) {
   return apiFetch<Atendimento[]>(`/pacientes/${idPaciente}/atendimentos`);
 }
@@ -341,14 +407,14 @@ export function listarProcedimentosDoAtendimento(idAtendimento: number) {
 }
 
 export function adicionarProcedimento(idAtendimento: number, dados: AdicionarProcedimentoInput) {
-  return apiFetch<any>(`/atendimentos/${idAtendimento}/procedimentos`, {
+  return apiFetch<ProcedimentoRealizadoCreateOut>(`/atendimentos/${idAtendimento}/procedimentos`, {
     method: "POST",
     body: JSON.stringify(dados),
   });
 }
 
 export function removerProcedimento(idAtendimento: number, idProcedimento: number) {
-  return apiFetch<any>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
+  return apiFetch<ProcedimentoRealizadoDeleteOut>(`/atendimentos/${idAtendimento}/procedimentos/${idProcedimento}`, {
     method: "DELETE",
   });
 }
@@ -356,6 +422,18 @@ export function removerProcedimento(idAtendimento: number, idProcedimento: numbe
 // --- CATÁLOGO DE PROCEDIMENTOS ---
 export function listarProcedimentos() {
   return apiFetch<ProcedimentoBase[]>('/procedimentos');
+}
+
+// --- STORED PROCEDURES ---
+export function buscarTempoMedioEsperaPorUnidade() {
+  return apiFetch<TempoMedioEsperaUnidade[]>("/unidades/tempo-medio-espera");
+}
+
+export function reajustarEscala(dados: ReajustarEscalaInput) {
+  return apiFetch<ReajustarEscalaOut>("/escalas/reajuste", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
 }
 
 // --- RELATÓRIOS / CONSULTAS ANALÍTICAS ---

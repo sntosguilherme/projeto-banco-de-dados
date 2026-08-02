@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { Plus, Activity, AlertCircle, FileText, Trash2, CircleCheckBig, CircleDashed } from 'lucide-react';
-import { 
+import {
   listarProcedimentosDoAtendimento, 
   adicionarProcedimento,
   removerProcedimento,
@@ -11,6 +11,10 @@ import {
   listarProcedimentos,
   ProcedimentoBase
 } from '@/services/api';
+
+function mensagemDoErro(erro: unknown, mensagemPadrao: string) {
+  return erro instanceof Error && erro.message ? erro.message : mensagemPadrao;
+}
 
 export default function ProcedimentosPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -25,7 +29,8 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
     id_procedimento: '',
     quantidade: 1 as number | string,
     tempo_real_minutos: '' as number | string,
-    observacao: ''
+    observacao: '',
+    data_hora_inicio: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -40,11 +45,12 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
       ]);
       setProcedimentos(dataProcedimentos);
       setCatalogo(dataCatalogo);
-    } catch (err: any) {
-      if (err.message?.includes('404')) {
+    } catch (err: unknown) {
+      const mensagem = mensagemDoErro(err, 'Erro ao carregar os dados.');
+      if (mensagem.includes('404')) {
         setError('Atendimento não encontrado. Verifique se o ID está correto.');
       } else {
-        setError(err.message || 'Erro ao carregar os dados.');
+        setError(mensagem);
       }
     } finally {
       setLoading(false);
@@ -52,7 +58,37 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
   };
 
   useEffect(() => {
-    carregarDados();
+    let ativo = true;
+
+    Promise.all([
+      listarProcedimentosDoAtendimento(atendimentoId),
+      listarProcedimentos(),
+    ])
+      .then(([dataProcedimentos, dataCatalogo]) => {
+        if (ativo) {
+          setProcedimentos(dataProcedimentos);
+          setCatalogo(dataCatalogo);
+        }
+      })
+      .catch((erroConsulta: unknown) => {
+        if (ativo) {
+          const mensagem = mensagemDoErro(erroConsulta, 'Erro ao carregar os dados.');
+          setError(
+            mensagem.includes('404')
+              ? 'Atendimento não encontrado. Verifique se o ID está correto.'
+              : mensagem,
+          );
+        }
+      })
+      .finally(() => {
+        if (ativo) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ativo = false;
+    };
   }, [atendimentoId]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -90,28 +126,31 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
         id_procedimento: Number(formData.id_procedimento),
         quantidade: qtd,
         tempo_real_minutos: tempo,
-        observacao: formData.observacao || undefined
+        observacao: formData.observacao || undefined,
+        data_hora_inicio: formData.data_hora_inicio || undefined,
       });
       
       setFormData({
         id_procedimento: '',
         quantidade: 1,
         tempo_real_minutos: 0,
-        observacao: ''
+        observacao: '',
+        data_hora_inicio: '',
       });
       await carregarDados();
-    } catch (err: any) {
-      const msg = err.message?.toLowerCase() || '';
+    } catch (err: unknown) {
+      const mensagem = mensagemDoErro(err, 'Erro ao adicionar o procedimento.');
+      const msg = mensagem.toLowerCase();
       if (msg.includes('409') || msg.includes('already') || msg.includes('já cadastrado')) {
         setFormError('Este procedimento já está registrado neste atendimento.');
       } else if (msg.includes('404')) {
         setFormError('Procedimento não encontrado. Verifique o ID do procedimento.');
       } else if (msg.includes('excede a duração') || msg.includes('exceder a duração')) {
-        setFormError(err.message);
+        setFormError(mensagem);
       } else if (msg.includes('violates check constraint') || msg.includes('tempo_real_minutos')) {
         setFormError('O tempo e a quantidade do procedimento devem ser maiores que zero.');
       } else {
-        setFormError(err.message || 'Erro ao adicionar o procedimento.');
+        setFormError(mensagem);
       }
     } finally {
       setIsSubmitting(false);
@@ -124,8 +163,8 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
     try {
       await removerProcedimento(atendimentoId, idProcedimento);
       await carregarDados();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao remover procedimento');
+    } catch (err: unknown) {
+      alert(mensagemDoErro(err, 'Erro ao remover procedimento'));
     }
   };
 
@@ -238,6 +277,20 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
               </div>
 
               <div className="space-y-2 flex-grow">
+                <label className="text-sm font-medium text-neutral-600">Início do procedimento</label>
+                <input
+                  type="datetime-local"
+                  name="data_hora_inicio"
+                  value={formData.data_hora_inicio}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none focus:border-neutral-400 transition-all text-sm text-neutral-900"
+                />
+                <p className="text-xs text-neutral-400">
+                  Em branco, será usado o horário de chegada do atendimento.
+                </p>
+              </div>
+
+              <div className="space-y-2 flex-grow">
                 <label className="text-sm font-medium text-neutral-600">Observação</label>
                 <textarea
                   name="observacao"
@@ -273,6 +326,7 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
                     <th className="p-4 pl-6 text-xs font-bold text-neutral-500 uppercase tracking-wider">Procedimento</th>
                     <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Qtd</th>
                     <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Tempo</th>
+                    <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Início</th>
                     <th className="p-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">Faturamento</th>
                     <th className="p-4 pr-6 text-right text-xs font-bold text-neutral-500 uppercase tracking-wider">Ações</th>
                   </tr>
@@ -280,13 +334,13 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
                 <tbody className="divide-y divide-neutral-200 text-sm text-neutral-700">
                   {loading ? (
                     <tr key="loading">
-                      <td colSpan={5} className="p-8 text-center text-neutral-500">
+                      <td colSpan={6} className="p-8 text-center text-neutral-500">
                         Carregando procedimentos...
                       </td>
                     </tr>
                   ) : procedimentos.length === 0 ? (
                     <tr key="empty">
-                      <td colSpan={5} className="p-12 text-center text-neutral-500">
+                      <td colSpan={6} className="p-12 text-center text-neutral-500">
                         Nenhum procedimento registrado neste atendimento.
                       </td>
                     </tr>
@@ -314,6 +368,11 @@ export default function ProcedimentosPage({ params }: { params: Promise<{ id: st
                         </td>
                         <td className="p-4">
                           {proc.tempo_real_minutos} min
+                        </td>
+                        <td className="p-4 whitespace-nowrap text-xs text-neutral-500">
+                          {proc.data_hora_inicio
+                            ? new Date(proc.data_hora_inicio).toLocaleString('pt-BR')
+                            : 'Não informado'}
                         </td>
                         <td className="p-4">
                           <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusVisual(proc.faturado).className}`}>

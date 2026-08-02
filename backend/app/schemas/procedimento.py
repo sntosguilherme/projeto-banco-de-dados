@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 from typing import Optional
 
@@ -17,6 +19,7 @@ class ProcedimentoRealizadoOut(BaseModel):
     tempo_real_minutos: int
     observacao: Optional[str] = None
     faturado: bool
+    data_hora_inicio: Optional[datetime] = None
 
 
 
@@ -34,6 +37,7 @@ class ProcedimentoRealizadoCreate(BaseModel):
     quantidade: int
     tempo_real_minutos: int
     observacao: Optional[str] = None
+    data_hora_inicio: Optional[datetime] = None
 
 class ProcedimentoRealizadoCreateOut(BaseModel):
     # Retorna os dados do procedimento realizado criado.
@@ -42,3 +46,4 @@ class ProcedimentoRealizadoCreateOut(BaseModel):
     quantidade: int
     tempo_real_minutos: int
     observacao: Optional[str] = None
+    data_hora_inicio: Optional[datetime] = None

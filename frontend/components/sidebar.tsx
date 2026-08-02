@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { 
   Menu, X, UserPlus, Users, GraduationCap, 
   BarChart3, ClipboardCheck, Clock, AlertTriangle, 
-  FileText, History, Home, Heart, ShieldAlert, LucideIcon
+  FileText, History, Home, Heart, ShieldAlert, CalendarClock, LucideIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -55,6 +55,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         { label: 'Últimos Atendimentos', href: '/consultas/ultimos-atendimentos', icon: History },
         // app/consultas/percentual-alto-risco/page.tsx
         { label: 'Alto Risco por Residente', href: '/consultas/percentual-alto-risco', icon: ShieldAlert },
+        // app/consultas/tempo-espera-unidade/page.tsx
+        { label: 'Tempo de Espera por Unidade', href: '/consultas/tempo-espera-unidade', icon: Clock },
+      ],
+    },
+    {
+      title: 'Escalas',
+      links: [
+        { label: 'Reajustar Escala', href: '/escalas/reajuste', icon: CalendarClock },
       ],
     },
     {
