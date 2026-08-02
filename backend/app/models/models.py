@@ -255,6 +255,7 @@ class ProcedimentoRealizado(Base):
     tempo_real_minutos: Mapped[int] = mapped_column(Integer, nullable=False)
     faturado: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text('false'))
     observacao: Mapped[Optional[str]] = mapped_column(Text)
+    data_hora_inicio: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, nullable=True)
 
     atendimento: Mapped['Atendimento'] = relationship('Atendimento', back_populates='procedimento_realizado')
     procedimento: Mapped['Procedimento'] = relationship('Procedimento', back_populates='procedimento_realizado')
