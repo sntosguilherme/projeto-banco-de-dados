@@ -26,12 +26,6 @@ TURNO = "Noite"
 # Evento para dar o tiro de largada simultaneamente
 start_gun = threading.Event()
 
-def lock_resident(db):
-    # Faz um SELECT simples no residente para uso futuro, mas a trava pesada (FOR UPDATE) 
-    # está na trigger do banco sempre que um insert em escala ocorre.
-    # Podemos também fazer o select explícito aqui se quisermos testar a trava na aplicação
-    pass
-
 def transaction_one():
     with SessionLocal() as db:
         try:
@@ -48,7 +42,8 @@ def transaction_one():
                 turno=TURNO,
             )
             db.add(escala)
-            db.flush() # Dispara a trigger no BD e tenta adquirir o lock no residente
+            # Ao fazer flush, tentará disparar a trigger e adquirir o lock
+            db.flush()
             
             # Segura a trava (se conseguir) para simular tempo de processamento
             time.sleep(2) 
@@ -118,7 +113,7 @@ if __name__ == "__main__":
     t1.start()
     t2.start()
 
-    # Dá um tempinho minúsculo pro Python inicializar as duas threads no modo de espera
+    # Dá um tempinho pro python inicializar as duas threads no modo de espera
     time.sleep(0.1)
 
     # Tiro de largada, Libera ambas ao exato mesmo tempo
