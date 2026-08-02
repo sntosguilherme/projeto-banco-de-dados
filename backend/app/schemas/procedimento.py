@@ -10,6 +10,7 @@ class ProcedimentoOut(BaseModel):
     nome: str
     tempo_medio_minutos: int
     nivel_risco: str
+    media_tempo_procedimento: Optional[float] = None
 # GET /atendimentos/{id_atendimento}/procedimentos
 class ProcedimentoRealizadoOut(BaseModel):
     # Retorna os procedimentos realizados em um atendimento específico.

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertTriangle, CalendarClock, CheckCircle2, LoaderCircle } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { useConsulta } from '@/hooks/use-consulta';
 import {
   buscarProfissionais,
@@ -124,6 +124,13 @@ export default function ReajusteEscalaPage() {
           </div>
         </div>
       )}
+
+      <div className="flex gap-3 items-start border border-sky-200 bg-sky-50 p-4 rounded-xl text-sky-800">
+        <ShieldCheck className="h-5 w-5 shrink-0 mt-0.5" />
+        <p className="text-sm">
+          Sobreposições no mesmo dia e turno são bloqueadas automaticamente pelo trigger do banco.
+        </p>
+      </div>
 
       <form
         onSubmit={enviarReajuste}

@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import (
+    auditorias,
     atendimentos,
     catalogo_procedimentos,
     health,
@@ -30,6 +31,7 @@ app.add_middleware(
 
 #registra as rotas de cada arquivo do routers/ na aplicação
 app.include_router(pacientes.router)
+app.include_router(auditorias.router)
 app.include_router(atendimentos.router)
 app.include_router(procedimento_realizado.router)
 app.include_router(catalogo_procedimentos.router)

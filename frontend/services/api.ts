@@ -163,6 +163,7 @@ export interface ProcedimentoBase {
   nome: string;
   tempo_medio_minutos: number;
   nivel_risco: string;
+  media_tempo_procedimento?: number | null;
 }
 
 export interface AdicionarProcedimentoInput {
@@ -249,6 +250,24 @@ export interface ResidenteSemSupervisor {
   preceptor_nome: string;
   preceptor_titulacao: string;
   supervisao_ativa: boolean;
+}
+
+export type OperacaoAuditoria = 'INSERT' | 'UPDATE' | 'DELETE';
+
+export interface AuditoriaAtendimento {
+  id_auditoria: number;
+  id_atendimento: number;
+  operacao: OperacaoAuditoria;
+  usuario: string;
+  dados_antigos: Record<string, unknown> | null;
+  dados_novos: Record<string, unknown> | null;
+  data_hora: string;
+}
+
+export interface FiltrosAuditoriaAtendimento {
+  operacao?: OperacaoAuditoria;
+  id_atendimento?: number;
+  limite?: number;
 }
 
 // =====================================================================
@@ -470,6 +489,23 @@ export function buscarPacientesInternados() {
 
 export function buscarResidentesSemSupervisor() {
   return apiFetch<ResidenteSemSupervisor[]>("/views/residentes-sem-supervisor");
+}
+
+// --- AUDITORIAS / TRIGGERS ---
+export function buscarAuditoriasAtendimentos(
+  filtros: FiltrosAuditoriaAtendimento = {},
+) {
+  const parametros = new URLSearchParams();
+  if (filtros.operacao) parametros.set('operacao', filtros.operacao);
+  if (filtros.id_atendimento) {
+    parametros.set('id_atendimento', String(filtros.id_atendimento));
+  }
+  if (filtros.limite) parametros.set('limite', String(filtros.limite));
+
+  const query = parametros.toString();
+  return apiFetch<AuditoriaAtendimento[]>(
+    `/auditorias/atendimentos${query ? `?${query}` : ''}`,
+  );
 }
 
 // --- RELATÓRIOS / CONSULTAS ANALÍTICAS ---

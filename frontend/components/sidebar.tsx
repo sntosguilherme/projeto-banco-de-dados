@@ -58,6 +58,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         { label: 'Alto Risco por Residente', href: '/consultas/percentual-alto-risco', icon: ShieldAlert },
         // app/consultas/tempo-espera-unidade/page.tsx
         { label: 'Tempo de Espera por Unidade', href: '/consultas/tempo-espera-unidade', icon: Clock },
+        // app/consultas/procedimentos/page.tsx
+        { label: 'Médias dos Procedimentos', href: '/consultas/procedimentos', icon: BarChart3 },
       ],
     },
     {
@@ -66,6 +68,12 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         { label: 'Estatísticas Mensais', href: '/views/estatisticas-atendimentos', icon: BarChart3 },
         { label: 'Pacientes Internados', href: '/views/pacientes-internados', icon: Users },
         { label: 'Supervisões Pendentes', href: '/views/residentes-sem-supervisor', icon: ClipboardCheck },
+      ],
+    },
+    {
+      title: 'Auditorias',
+      links: [
+        { label: 'Atendimentos', href: '/auditorias/atendimentos', icon: FileText },
       ],
     },
     {
