@@ -12,6 +12,7 @@ from app.routers import (
     relatorios,
     residentes,
     stored_procedures,
+    views,
 )
 
 
@@ -37,3 +38,4 @@ app.include_router(health.router)
 app.include_router(profissionais.router)
 app.include_router(residentes.router)  
 app.include_router(stored_procedures.router)
+app.include_router(views.router)

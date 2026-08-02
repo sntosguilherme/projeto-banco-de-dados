@@ -230,6 +230,27 @@ export interface ReajustarEscalaOut {
   detail: string;
 }
 
+export interface EstatisticaAtendimentoMensal {
+  mes: string;
+  unidade: string | null;
+  total_atendimentos: number;
+  media_duracao: number;
+  procedimento_mais_comum: string | null;
+}
+
+export interface PacienteInternado {
+  paciente_nome: string;
+  data_hora_entrada: string;
+  unidade_internacao: string;
+}
+
+export interface ResidenteSemSupervisor {
+  residente_nome: string;
+  preceptor_nome: string;
+  preceptor_titulacao: string;
+  supervisao_ativa: boolean;
+}
+
 // =====================================================================
 // 2. INTERFACES EXATAS DAS QUERIES DE LISTAGEM GERAL
 // =====================================================================
@@ -434,6 +455,21 @@ export function reajustarEscala(dados: ReajustarEscalaInput) {
     method: "POST",
     body: JSON.stringify(dados),
   });
+}
+
+// --- VIEWS ---
+export function buscarEstatisticasAtendimentosMensais() {
+  return apiFetch<EstatisticaAtendimentoMensal[]>(
+    "/views/estatisticas-atendimentos-mensais",
+  );
+}
+
+export function buscarPacientesInternados() {
+  return apiFetch<PacienteInternado[]>("/views/pacientes-internados");
+}
+
+export function buscarResidentesSemSupervisor() {
+  return apiFetch<ResidenteSemSupervisor[]>("/views/residentes-sem-supervisor");
 }
 
 // --- RELATÓRIOS / CONSULTAS ANALÍTICAS ---

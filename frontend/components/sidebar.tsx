@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import SidebarScrollArea from './sidebar-scroll-area';
 import { 
   Menu, X, UserPlus, Users, GraduationCap, 
   BarChart3, ClipboardCheck, Clock, AlertTriangle, 
@@ -60,6 +61,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       ],
     },
     {
+      title: 'Views',
+      links: [
+        { label: 'Estatísticas Mensais', href: '/views/estatisticas-atendimentos', icon: BarChart3 },
+        { label: 'Pacientes Internados', href: '/views/pacientes-internados', icon: Users },
+        { label: 'Supervisões Pendentes', href: '/views/residentes-sem-supervisor', icon: ClipboardCheck },
+      ],
+    },
+    {
       title: 'Escalas',
       links: [
         { label: 'Reajustar Escala', href: '/escalas/reajuste', icon: CalendarClock },
@@ -107,7 +116,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="h-[calc(100vh-4rem)] overflow-y-auto p-4 space-y-6">
+        <SidebarScrollArea>
           {navigationData.map((section) => (
             <div key={section.title}>
               <p className="px-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
@@ -130,7 +139,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               </div>
             </div>
           ))}
-        </nav>
+        </SidebarScrollArea>
       </aside>
     </>
   );
