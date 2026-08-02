@@ -1,8 +1,8 @@
-"""Seed test data.
+"""Adiciona dados de teste para as tabelas do banco de dados.
 
-Revision ID: 20260730_01
-Revises: 20260730_00
-Create Date: 2026-07-30
+Revision ID: 20260802_03
+Revises: 20260802_02
+Create Date: 2026-08-02
 """
 
 from datetime import date, datetime
@@ -11,8 +11,8 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-revision: str = "20260730_01"
-down_revision: Union[str, Sequence[str], None] = "93b1444b14a9"
+revision: str = "20260802_03"
+down_revision: Union[str, Sequence[str], None] = "20260802_02"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -90,6 +90,7 @@ procedimento_realizado = sa.table(
     sa.column("tempo_real_minutos", sa.Integer),
     sa.column("observacao", sa.Text),
     sa.column("faturado", sa.Boolean),
+    sa.column("data_hora_inicio", sa.DateTime),
 )
 escala = sa.table(
     "escala",
@@ -221,12 +222,20 @@ def upgrade() -> None:
         (17, 9, 21, "Intubação de emergência", False),
     ]
     op.bulk_insert(procedimento_realizado, [{"id_atendimento": a, "id_procedimento": p, "quantidade": 1, "tempo_real_minutos": t, "observacao": o, "faturado": f} for a, p, t, o, f in performed])
+
+    # Preenche a nova coluna com o horário de chegada do atendimento.
+    op.execute(sa.text("""
+        UPDATE procedimento_realizado pr
+        SET data_hora_inicio = a.data_hora
+        FROM atendimento a
+        WHERE pr.id_atendimento = a.id_atendimento
+    """))
     schedules = [
         (1, "Segunda", "Manha", 1, 6), (1, "Terca", "Noite", 2, 6), (1, "Quarta", "Tarde", 3, 8), (1, "Quinta", "Manha", 4, 9), (1, "Sexta", "Noite", 5, 10),
         (2, "Segunda", "Tarde", 2, 7), (2, "Terca", "Manha", 4, 6), (2, "Quarta", "Noite", 1, 8), (2, "Sabado", "Manha", 3, 9),
         (3, "Segunda", "Manha", 5, 10), (3, "Terca", "Tarde", 1, 7), (3, "Quinta", "Noite", 2, 9), (3, "Sabado", "Tarde", 4, 8), (3, "Domingo", "Manha", 3, 6),
         (4, "Segunda", "Manha", 3, 9), (4, "Quarta", "Tarde", 5, 7), (4, "Sexta", "Noite", 2, 10), (4, "Sabado", "Manha", 1, 8),
-        (5, "Terca", "Manha", 4, 6), (5, "Quarta", "Manha", 1, 9), (5, "Quinta", "Tarde", 5, 8), (5, "Sexta", "Manha", 3, 7),
+        (5, "Terca", "Tarde", 4, 6), (5, "Quarta", "Manha", 1, 9), (5, "Quinta", "Tarde", 5, 8), (5, "Sexta", "Manha", 3, 7),
     ]
     op.bulk_insert(escala, [{"id_escala": i, "id_unidade": u, "dia_semana": d, "turno": t, "id_residente": r, "id_preceptor": p} for i, (u, d, t, r, p) in enumerate(schedules, 1)])
 
@@ -261,3 +270,8 @@ def downgrade() -> None:
         op.execute(
             sa.text(f"DELETE FROM {table_name} WHERE {id_column} IN ({seed_ids})")
         )
+
+    # Remove os registros de auditoria criados pelos triggers durante o seed.
+    op.execute(
+        sa.text("DELETE FROM auditoria_atendimento WHERE id_atendimento BETWEEN 1 AND 17")
+    )
