@@ -1,9 +1,18 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import case, func, text
+from sqlalchemy import case, func, select
 
 from app.database import get_db
-from app.models import Atendimento, Paciente, Preceptor, Procedimento, ProcedimentoRealizado, Residente
+from app.models.models import (
+    Atendimento,
+    Paciente,
+    Preceptor,
+    Procedimento,
+    ProcedimentoRealizado,
+    Residente,
+    Escala,
+    Unidade,
+)
 from app.schemas.relatorios import (
     PacienteSemProcedimentoAltoRiscoOut,
     PlantaoPorUnidadeOut,
@@ -14,21 +23,27 @@ from app.schemas.relatorios import (
     PercentualAltoRiscoOut,
     PreceptorFlamenguistaOut,
 )
-from app.sql_loader import load_query
 
 router = APIRouter(tags=["Relatórios"])
-ARQUIVO_SQL = "04_analytical_queries.sql"
-
-
-def executar_relatorio(db: Session, nome_query: str):
-    query = load_query(ARQUIVO_SQL, nome_query)
-    return db.execute(text(query)).mappings().all()
+def executar_consulta(db: Session, statement):
+    return db.execute(statement).mappings().all()
 
 
 @router.get("/residentes/ranking", response_model=list[RankingResidenteOut])
 def ranking_residentes(db: Session = Depends(get_db)):
     try:
-        return executar_relatorio(db, "ranking_residentes_atendimentos")
+        total_atendimentos = func.count(Atendimento.id_atendimento)
+        statement = (
+            select(
+                Residente.nome.label("residente"),
+                total_atendimentos.label("total_atendimentos"),
+            )
+            .select_from(Residente)
+            .outerjoin(Residente.atendimento)
+            .group_by(Residente.nome)
+            .order_by(total_atendimentos.desc())
+        )
+        return executar_consulta(db, statement)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -36,7 +51,21 @@ def ranking_residentes(db: Session = Depends(get_db)):
 @router.get("/preceptores/supervisao", response_model=list[PreceptorSupervisorOut])
 def preceptores_mais_de_5_atendimentos(db: Session = Depends(get_db)):
     try:
-        return executar_relatorio(db, "preceptores_mais_de_5_atendimentos_mes")
+        mes = func.date_trunc("month", Atendimento.data_hora)
+        total_atendimentos = func.count(Atendimento.id_atendimento)
+        statement = (
+            select(
+                Preceptor.nome.label("preceptor"),
+                mes.label("mes"),
+                total_atendimentos.label("total_atendimentos"),
+            )
+            .select_from(Atendimento)
+            .join(Atendimento.preceptor)
+            .group_by(Preceptor.nome, mes)
+            .having(total_atendimentos > 5)
+            .order_by(mes, total_atendimentos.desc())
+        )
+        return executar_consulta(db, statement)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -44,7 +73,20 @@ def preceptores_mais_de_5_atendimentos(db: Session = Depends(get_db)):
 @router.get("/unidades/plantoes", response_model=list[PlantaoPorUnidadeOut])
 def plantoes_por_unidade(db: Session = Depends(get_db)):
     try:
-        return executar_relatorio(db, "plantoes_por_residente_unidade")
+        total_plantoes = func.count(Escala.id_escala)
+        statement = (
+            select(
+                Unidade.nome.label("unidade"),
+                Residente.nome.label("residente"),
+                total_plantoes.label("qtd_plantoes_semanais"),
+            )
+            .select_from(Escala)
+            .join(Escala.unidade)
+            .join(Escala.residente)
+            .group_by(Unidade.nome, Residente.nome)
+            .order_by(Unidade.nome, total_plantoes.desc())
+        )
+        return executar_consulta(db, statement)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -55,7 +97,19 @@ def plantoes_por_unidade(db: Session = Depends(get_db)):
 )
 def pacientes_sem_procedimento_alto_risco(db: Session = Depends(get_db)):
     try:
-        return executar_relatorio(db, "pacientes_sem_procedimento_alto_risco")
+        pacientes_com_alto_risco = (
+            select(Atendimento.id_paciente)
+            .join(ProcedimentoRealizado, ProcedimentoRealizado.id_atendimento == Atendimento.id_atendimento)
+            .join(Procedimento, Procedimento.id_procedimento == ProcedimentoRealizado.id_procedimento)
+            .where(Procedimento.nivel_risco == "ALTO")
+        )
+        statement = (
+            select(Paciente.nome.label("paciente"))
+            .select_from(Paciente)
+            .where(Paciente.id_pessoa.not_in(pacientes_com_alto_risco))
+            .order_by(Paciente.nome)
+        )
+        return executar_consulta(db, statement)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

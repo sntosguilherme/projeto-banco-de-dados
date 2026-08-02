@@ -36,3 +36,5 @@ pgdata/
 ### Sistema Operacional ###
 .DS_Store
 Thumbs.db
+
+temp/*

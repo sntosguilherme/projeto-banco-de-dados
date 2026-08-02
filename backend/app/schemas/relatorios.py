@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from pydantic import BaseModel
 
 
@@ -50,7 +50,7 @@ class ProcedimentoResumoOut(BaseModel):
 # GET /pacientes/ultimo-atendimento
 class UltimoAtendimentoOut(BaseModel):
     id_atendimento: int
-    data_hora: date.datetime
+    data_hora: datetime
     paciente: str
     residente: str
     preceptor: str

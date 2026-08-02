@@ -1,7 +1,7 @@
 """Adiciona data_hora_inicio em procedimento_realizado e cria procedures
 
-Revision ID: 20260801_02
-Revises: 20260730_01
+Revision ID: 20260801_01
+Revises: 93b1444b14a9
 Create Date: 2026-08-01
 
 """
@@ -11,17 +11,18 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = '20260801_02'
-down_revision: Union[str, Sequence[str], None] = '20260730_01'
+
+revision: str = '20260801_01'
+down_revision: Union[str, Sequence[str], None] = '93b1444b14a9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 1. Adicionando coluna data_hora_inicio na tabela procedimento_realizado
+    # Adicionando coluna data_hora_inicio na tabela procedimento_realizado
     op.add_column('procedimento_realizado', sa.Column('data_hora_inicio', sa.DateTime(), nullable=True))
     
-    # 2. Preenchendo a coluna nos registros históricos usando a data_hora do atendimento para não deixar nulo
+    # Preenchendo a coluna nos registros históricos usando a data_hora do atendimento para não deixar nulo
     op.execute("""
         UPDATE procedimento_realizado pr
         SET data_hora_inicio = a.data_hora
@@ -29,7 +30,7 @@ def upgrade() -> None:
         WHERE pr.id_atendimento = a.id_atendimento AND pr.data_hora_inicio IS NULL;
     """)
 
-    # 3. Criação das Stored Procedures solicitadas
+    # Criação das Stored Procedures solicitadas
     op.execute("""
         CREATE OR REPLACE PROCEDURE sp_registrar_atendimento_completo(
             p_data_hora TIMESTAMP,
