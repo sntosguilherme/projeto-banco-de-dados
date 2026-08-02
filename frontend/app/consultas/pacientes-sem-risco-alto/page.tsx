@@ -90,10 +90,7 @@ export default function PacientesSemRiscoPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200 bg-white">
-                {pacientes.map((paciente, index) => {
-                  const nomeExibicao = paciente.nome || (paciente as any).paciente || "Nome Indisponível";
-
-                  return (
+                {pacientes.map((paciente, index) => (
                     <tr key={index} className="hover:bg-neutral-50/50 transition-colors">
                       <td className="px-6 py-4 text-center whitespace-nowrap text-neutral-400 font-mono">
                         {index + 1}
@@ -104,13 +101,12 @@ export default function PacientesSemRiscoPage() {
                             <User className="h-4 w-4" />
                           </div>
                           <span className="font-medium text-neutral-900">
-                            {nomeExibicao}
+                            {paciente.paciente}
                           </span>
                         </div>
                       </td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>

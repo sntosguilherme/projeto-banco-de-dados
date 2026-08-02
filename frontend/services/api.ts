@@ -199,27 +199,60 @@ export interface ProfissionalGeral {
 // =====================================================================
 
 export interface ResidenteRanking {
-  nome: string;
+  residente: string;
   total_atendimentos: number;
 }
 
 export interface PreceptorSupervisao {
-  nome: string;
+  preceptor: string;
   mes: string;
   total_atendimentos: number;
 }
 
 export interface PlantoesUnidade {
   unidade: string;
-  nome: string;
+  residente: string;
   qtd_plantoes_semanais: number;
 }
 
 export interface PacienteSemRisco {
+  paciente: string;
+}
+
+export interface TempoMedioResidente {
+  nome_residente: string;
+  ano_residencia: string;
+  tempo_medio_atendimento: number;
+}
+
+export interface PreceptorFlamenguista {
+  id_profissional: number;
   nome: string;
-  cpf?: string;
-  num_convenio?: string;
-  alergias?: string;
+  crm: string;
+  titulacao: string;
+}
+
+export interface ProcedimentoUltimoAtendimento {
+  nome_procedimento: string;
+  quantidade: number;
+  tempo_real_minutos: number;
+}
+
+export interface UltimoAtendimentoPaciente {
+  id_atendimento: number;
+  data_hora: string;
+  paciente: string;
+  residente: string;
+  preceptor: string;
+  procedimentos: ProcedimentoUltimoAtendimento[];
+}
+
+export interface PercentualAltoRiscoResidente {
+  id_residente: number;
+  nome_residente: string;
+  total_procedimentos: number;
+  total_alto_risco: number;
+  percentual_alto_risco: number;
 }
 
 export interface CriarPacienteOut {
@@ -343,5 +376,21 @@ export function buscarPacientesSemRiscoAlto() {
 }
 
 export function buscarTempoMedioPorResidente() {
-  return apiFetch<any>("/residentes/metricas/tempo-medio-atendimento");
+  return apiFetch<TempoMedioResidente[]>("/residentes/metricas/tempo-medio-atendimento");
+}
+
+export function buscarPreceptoresDePacientesFlamenguistas() {
+  return apiFetch<PreceptorFlamenguista[]>(
+    "/preceptores/supervisionaram-pacientes-flamenguistas",
+  );
+}
+
+export function buscarUltimosAtendimentosPorPaciente() {
+  return apiFetch<UltimoAtendimentoPaciente[]>("/pacientes/ultimo-atendimento");
+}
+
+export function buscarPercentualAltoRiscoPorResidente() {
+  return apiFetch<PercentualAltoRiscoResidente[]>(
+    "/residentes/percentual-alto-risco",
+  );
 }

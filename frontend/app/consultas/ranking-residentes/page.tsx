@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 // Importa a função e a interface unificada direto do api.ts (usando caminho relativo seguro)
 import { buscarRankingResidentes, ResidenteRanking } from '../../../services/api'; 
-import { Trophy, Medal, Award, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Trophy, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function RankingPage() {
   const [ranking, setRanking] = useState<ResidenteRanking[]>([]);
@@ -105,8 +105,6 @@ export default function RankingPage() {
                 <tr>
                   <th scope="col" className="px-6 py-4 w-20 text-center">Posição</th>
                   <th scope="col" className="px-6 py-4">Nome do Residente</th>
-                  <th scope="col" className="px-6 py-4">Especialidade</th>
-                  <th scope="col" className="px-6 py-4 text-center w-32">Ano</th>
                   <th scope="col" className="px-6 py-4 text-right w-44">Total de Atendimentos</th>
                 </tr>
               </thead>
@@ -126,14 +124,6 @@ export default function RankingPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={isFirst ? 'font-semibold' : 'text-neutral-900'}>
                           {item.residente}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-neutral-500">
-                        {item.especialidade || 'Geral'}
-                      </td>
-                      <td className="px-6 py-4 text-center whitespace-nowrap text-neutral-500">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
-                          {item.ano_residencia || 'R1'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right whitespace-nowrap font-mono text-neutral-900 pr-12">

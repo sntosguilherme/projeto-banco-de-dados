@@ -1,15 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { buscarTempoMedioPorResidente } from '../../../services/api';
+import { buscarTempoMedioPorResidente, TempoMedioResidente } from '../../../services/api';
 import { Clock, User, Award, RefreshCw, Search, ShieldAlert, TrendingUp } from 'lucide-react';
-
-// Interface para estruturar o retorno do cálculo analítico
-interface TempoMedioResidente {
-  nome_residente: string;
-  ano_residencia: string;
-  tempo_medio_atendimento: number;
-}
 
 export default function TempoMedioAtendimentoPage() {
   const [metricas, setMetricas] = useState<TempoMedioResidente[]>([]);

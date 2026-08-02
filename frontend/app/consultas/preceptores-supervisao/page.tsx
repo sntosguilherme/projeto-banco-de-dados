@@ -103,8 +103,6 @@ export default function PreceptoresSupervisaoPage() {
               </thead>
               <tbody className="divide-y divide-neutral-200 bg-white">
                 {dadosSupervisao.map((item, index) => {
-                  // Fallback seguro caso mude a nomenclatura de chaves
-                  const nomePreceptor = item.nome || (item as any).preceptor || "Não identificado";
                   const mesFormatado = item.mes ? formatarMes(item.mes) : "Período Geral";
 
                   return (
@@ -115,7 +113,7 @@ export default function PreceptoresSupervisaoPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <UserCheck className="h-4 w-4 text-neutral-500" />
-                          <span className="font-medium text-neutral-900">{nomePreceptor}</span>
+                          <span className="font-medium text-neutral-900">{item.preceptor}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-neutral-500 capitalize">
