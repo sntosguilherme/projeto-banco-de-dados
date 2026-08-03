@@ -108,7 +108,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       {/* Container da Sidebar */}
       <aside
         className={`fixed top-0 left-0 z-40 h-screen border-r border-neutral-200 bg-white transition-transform duration-300 ${
-          isOpen ? 'translate-x-0 w-64' : '-translate-x-full'
+          isOpen ? 'translate-x-0 w-80' : '-translate-x-full'
         }`}
       >
         <div className="flex h-16 items-center justify-between px-4 border-b border-neutral-100">
