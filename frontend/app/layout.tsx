@@ -34,7 +34,7 @@ export default function RootLayout({
           {/* Área do Conteúdo Principal */}
           <div 
             className={`flex-1 min-w-0 transition-all duration-300 ${
-              sidebarOpen ? 'md:pl-64' : 'md:pl-0'
+              sidebarOpen ? 'md:pl-80' : 'md:pl-0'
             }`}
           >
             <main className="min-h-screen p-4 pt-20 md:p-8 md:pt-8 bg-neutral-50">
