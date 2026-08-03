@@ -6,9 +6,9 @@ Este repositório contém o projeto de banco de dados da equipe, desenvolvido co
 
 O projeto adota uma arquitetura em microsserviços (conteinerizada), dividida nas seguintes camadas:
 
-1. **Banco de Dados (Database):** PostgreSQL 16. O esquema e os dados de teste são gerenciados por migrations do Alembic.
-2. **Backend (API):** Desenvolvido em Python 3 utilizando o framework FastAPI. Responsável por expor os endpoints REST, aplicar regras de negócio e realizar a comunicação direta com o banco de dados (usando `psycopg2`).
-3. **Frontend (UI):** Aplicação web desenvolvida em React utilizando o framework Next.js. Consome a API do backend para exibir as listagens, gráficos e formulários do sistema do hospital.
+1. **Banco de Dados (Database):** PostgreSQL 16. O esquema, visões, funções, gatilhos e os dados de teste são gerenciados por migrations evolutivas via Alembic.
+2. **Backend (API & ORM):** Desenvolvido em Python 3 com FastAPI. Na **Etapa 2**, a camada de acesso a dados foi totalmente migrada para **SQLAlchemy ORM**, trazendo controle avançado de sessões e transações ACID, mapeamento objeto-relacional (Declarative/Core) e consultas analíticas utilizando a DSL da ORM (substituindo SQL cru).
+3. **Frontend (UI):** Aplicação web interativa desenvolvida em React com Next.js e TypeScript. Consome a API do backend exibindo painéis administrativos, relatórios gerenciais das *Views*, logs de auditoria e fluxos de atendimento em tempo real.
 
 ---
 
@@ -119,21 +119,70 @@ O painel do Frontend ficará disponível em `http://localhost:3000`.
 
 ---
 
+## Funcionalidades Avançadas e Regras de Negócio
+
+Na segunda etapa do projeto, o sistema foi enriquecido com lógicas avançadas de banco de dados e mapeamento objeto-relacional:
+
+### 1. Stored Procedures & Funções Tabulares
+- `sp_registrar_atendimento_completo`: Registro transacional atômico de atendimento junto a múltiplos procedimentos (via JSONB). Em caso de falha de qualquer item, ocorre *rollback* automático de toda a operação.
+- `sp_calcular_tempo_medio_espera`: Função tabular no PostgreSQL que calcula o tempo médio exato (em minutos) entre a chegada dos pacientes e o início do primeiro procedimento cirúrgico/clínico em cada unidade hospitalar.
+- `sp_reajustar_escala`: Reajuste em lote de plantões de um residente de um dia/turno para outro, previndo conflitos automaticamente.
+
+### 2. Triggers (Gatilhos) & Auditoria de Atendimentos
+- `trg_check_sobreposicao_escala` (`BEFORE INSERT/UPDATE` em `escala`): Protege o sistema contra choques de horário, impedindo que um residente seja escalado ao mesmo tempo em duas unidades diferentes com uso de travamento pessimista (`FOR UPDATE`).
+- `trg_audita_atendimento` (`AFTER INSERT/UPDATE/DELETE` em `atendimento`): Sistema de auditoria completo que grava cada modificação (inserção, edição ou exclusão) em uma tabela `auditoria_atendimento`, armazenando usuário do banco, timestamp e um comparativo de snapshots em formato `JSONB` dos dados antigos e novos.
+- `trg_atualiza_media_procedimentos` (`AFTER INSERT` em `procedimento_realizado`): Gatilho analítico que mantém a coluna de tempo médio real de cada procedimento constantemente atualizada na tabela principal.
+
+### 3. Views (Visões Gerenciais no Banco)
+- `vw_pacientes_internados`: Retorna a lista atualizada em tempo real de pacientes que continuam internados (`data_hora_saida IS NULL`).
+- `vw_residentes_sem_supervisor`: Aponta inconsistências gerenciais listando residentes em plantão sob supervisão inativa ou preceptores sem titulação de Doutor.
+- `vw_estatisticas_atendimentos_mensal`: Consolidação analítica agrupada por mês e unidade, indicando total de atendimentos, duração média e o procedimento mais realizado no período (utilizando `MODE() WITHIN GROUP`).
+
+### 4. Consultas Complexas com SQLAlchemy ORM
+Demonstrando o poder da DSL do SQLAlchemy (com Joins explícitos, Subqueries e filtros, sem uso de SQL textual cru):
+- Listagem de preceptores que supervisionaram residentes responsáveis pelo atendimento de pacientes flamenguistas (`is_flamengo = TRUE`).
+- Consulta do último atendimento de cada paciente (trazendo residente, preceptor e histórico completo dos procedimentos vinculados via relacionamentos *Eager/Lazy Loading*).
+- Cálculo dinâmico do percentual de procedimentos de alto risco efetuados por cada residente do hospital.
+
+---
+
+## Testes Automatizados & Simulação de Concorrência
+
+O projeto possui uma suíte completa de testes de integração e simulações multirrealidade em Python para homologar os mecanismos de transação e travamento (*locking*).
+
+Com os contêineres do Docker rodando (`docker compose up -d`), execute as validações via terminal:
+
+### Rodar Suíte Completa de Integração (Procedures, Triggers, Views e ORM)
+```bash
+docker compose exec -e RUN_DB_INTEGRATION=1 backend python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+### Demonstrar Concorrência e Tratamento de Conflito (Lock Pessimista)
+Simula duas transações concorrentes simultâneas (em threads paralelas com *start_gun*) tentando escalar o mesmo médico no mesmo turno e exibe a proteção do banco rejeitando a colisão:
+```bash
+docker compose exec backend python tests/test_concorrencia_escala.py
+```
+
+---
+
 ## Estrutura do Repositório
 
 ```text
-├── backend/          # Código-fonte da API em FastAPI e regras de negócio
-├── frontend/         # Código-fonte da interface do usuário em Next.js/React
-├── sql/              # Scripts SQL do projeto
-│   ├── ddl/          # Scripts de criação (Tabelas, Visões, Functions/Triggers)
-│   ├── dml/          # Scripts de povoamento (Inserts de dados iniciais)
-│   └── queries/      # Consultas analíticas auxiliares
-├── docs/             # Documentações adicionais (Relatório, Diagramas, ER)
-├── docker-compose.yml# Orquestração dos containers (DB, Backend, Frontend)
-├── .env.example      # Template de configuração de variáveis de ambiente
-└── README.md         # Documentação inicial
+├── backend/                  # API FastAPI, modelos SQLAlchemy ORM e suíte de testes
+│   ├── app/                  # Rotas (Controllers), Modelos ORM e Schemas Pydantic
+│   ├── migrations/           # Histórico evolutivo do banco (Alembic)
+│   └── tests/                # Testes de integração (Procedures, Triggers, Views, Concorrência)
+├── frontend/                 # Aplicação Next.js/React (Painel Hospitalar e Auditorias)
+├── sql/                      # Scripts DDL limpos para avaliação da Etapa 2
+│   ├── 01_stored_procedures.sql # Stored Procedures e funções tabulares
+│   ├── 02_triggers.sql          # Funções de gatilho, travas e tabela de auditoria
+│   └── 03_views.sql             # Definição das visões de relatórios gerenciais
+├── docs/                     # Documentação (Relatórios em PDF, Diagrama ER)
+├── docker-compose.yml        # Orquestração de microsserviços (Postgres, API, UI)
+├── .env.example              # Template das variáveis de ambiente do projeto
+└── README.md                 # Documentação principal da arquitetura do projeto
 ```
 
 ## Observações Importantes
 
-- **Reset do Banco de Dados:** Para recriar o banco desde a primeira migration, remova o volume com `docker compose down -v` antes de subir os serviços novamente.
+- **Reset Completo do Banco:** Para recriar o banco desde o zero, aplicando todos os schemas e alimentando novamente os dados de teste iniciais, remova o volume com `docker compose down -v` e inicie novamente com `docker compose up --build -d`.
